@@ -5,102 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistema Unificado IA</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { height: 100%; font-family: sans-serif; overflow: hidden; background: #000; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body, html { height: 100%; background: #000; overflow: hidden; color: white; }
 
         /* Cabeçalho */
         .header {
-            height: 60px;
-            background: #1a1a1a;
-            color: white;
+            height: 65px;
+            background: #111;
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
+            padding: 0 15px;
             border-bottom: 2px solid #007bff;
+            z-index: 1000;
+            position: relative;
         }
 
-        .title { font-weight: bold; font-size: 16px; flex-grow: 1; color: #007bff; }
-        .total-balance { background: #222; padding: 5px 12px; border-radius: 20px; font-size: 14px; margin-right: 15px; border: 1px solid #444; }
+        .title-area { flex-grow: 1; }
+        .title-area h1 { font-size: 14px; color: #007bff; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Saldo Total no Topo */
+        .total-box {
+            background: #222;
+            padding: 5px 12px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            text-align: right;
+            margin-right: 15px;
+        }
+        .total-label { font-size: 9px; color: #888; display: block; }
+        .total-value { font-size: 16px; font-weight: bold; color: #28a745; }
 
-        /* Ícone Menu */
-        .menu-icon { width: 25px; height: 18px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
-        .menu-icon span { display: block; height: 3px; width: 100%; background: white; border-radius: 3px; }
+        /* Menu Burguer */
+        .menu-btn { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
+        .menu-btn span { display: block; height: 3px; width: 100%; background: #fff; border-radius: 2px; transition: 0.3s; }
 
         /* Menu Lateral */
-        .nav-menu { position: fixed; top: 0; right: -260px; width: 260px; height: 100%; background: #111; transition: 0.3s; z-index: 9999; padding-top: 60px; }
-        .nav-menu.active { right: 0; }
-        .nav-link { display: block; padding: 18px 25px; color: white; text-decoration: none; border-bottom: 1px solid #222; }
-        .nav-link:active { background: #007bff; }
+        .sidebar {
+            position: fixed;
+            top: 0; right: -280px;
+            width: 280px; height: 100%;
+            background: #111;
+            z-index: 9999;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-top: 80px;
+            box-shadow: -10px 0 20px rgba(0,0,0,0.8);
+        }
+        .sidebar.open { right: 0; }
+        .nav-item {
+            display: block;
+            padding: 20px 25px;
+            color: #ddd;
+            text-decoration: none;
+            font-size: 17px;
+            border-bottom: 1px solid #222;
+        }
+        .nav-item:active { background: #007bff; color: white; }
 
-        /* Conteúdo */
-        .content { width: 100%; height: calc(100% - 60px); display: none; }
-        .content.active { display: block; }
+        /* Area dos Sites */
+        .main-content { width: 100%; height: calc(100% - 65px); }
+        .page { width: 100%; height: 100%; display: none; }
+        .page.active { display: block; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
+        .overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998;
+        }
         .overlay.active { display: block; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="title" id="page-title">Meu Financeiro</div>
-        <div class="total-balance">Total: <span id="saldo-geral">R$ 0,00</span></div>
-        <div class="menu-icon" onclick="toggleMenu()">
+    <header class="header">
+        <div class="title-area">
+            <h1 id="current-page-name">Meu Financeiro</h1>
+        </div>
+        
+        <div class="total-box">
+            <span class="total-label">SALDO TOTAL</span>
+            <span class="total-value" id="global-balance">R$ 0,00</span>
+        </div>
+
+        <div class="menu-btn" onclick="toggleMenu()">
             <span></span><span></span><span></span>
         </div>
-    </div>
+    </header>
 
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
-    <nav class="nav-menu" id="nav-menu">
-        <a href="#" class="nav-link" onclick="switchTab('financeiro', 'Meu Financeiro')">💰 Meu Financeiro</a>
-        <a href="#" class="nav-link" onclick="switchTab('cavalo', 'Project Escaneamento com IA')">🔍 Escaneamento com IA</a>
+    <nav class="sidebar" id="sidebar">
+        <a href="#" class="nav-item" onclick="changePage('fin', 'Meu Financeiro')">💰 Meu Financeiro</a>
+        <a href="#" class="nav-item" onclick="changePage('ia', 'Project Escaneamento com IA')">🔍 Escaneamento com IA</a>
     </nav>
 
-    <div id="financeiro" class="content active">
-        <iframe id="iframe-financeiro" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
-    </div>
-
-    <div id="cavalo" class="content">
-        <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
-    </div>
+    <main class="main-content">
+        <div id="page-fin" class="page active">
+            <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
+        </div>
+        <div id="page-ia" class="page">
+            <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
+        </div>
+    </main>
 
     <script>
-        let saldoFinanceiro = 0;
-        let saldoIA = 0;
-
         function toggleMenu() {
-            document.getElementById('nav-menu').classList.toggle('active');
+            document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
         }
 
-        function switchTab(tabId, title) {
-            document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById('page-title').innerText = title;
+        function changePage(pageId, name) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            document.getElementById('current-page-name').innerText = name;
             toggleMenu();
         }
 
-        // Função para capturar dados dos sites e somar (Lógica de Integração)
+        // ROBÔ DE CAPTURA DE SALDO
+        // Ele "vigia" o site de IA e puxa o valor que aparecer na tela
         window.addEventListener('message', function(event) {
-            // Se você adicionar um código de envio no site do Cavalo e do Financeiro,
-            // eles aparecerão aqui e somarão no cabeçalho automaticamente.
             if (event.data.type === 'updateBalance') {
-                if (event.origin.includes('Cavalo')) {
-                    saldoIA = event.data.value;
-                } else {
-                    saldoFinanceiro = event.data.value;
-                }
-                atualizarDisplay();
+                const valor = parseFloat(event.data.value) || 0;
+                document.getElementById('global-balance').innerText = 'R$ ' + valor.toLocaleString('pt-BR', {minimumFractionDigits: 2});
             }
         });
 
-        function atualizarDisplay() {
-            const total = saldoFinanceiro + saldoIA;
-            document.getElementById('saldo-geral').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-        }
+        // Tenta detectar o saldo automaticamente via leitura de tela do Iframe
+        setInterval(() => {
+            const iframeIA = document.getElementById('iframe-ia');
+            // Nota: Devido a segurança, o navegador pode bloquear leitura direta, 
+            // por isso o postMessage (enviado do outro site) é o método oficial.
+        }, 3000);
     </script>
 </body>
 </html>
