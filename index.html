@@ -95,12 +95,10 @@
             toggleMenu();
         }
 
-        // Puxa do site Cavalo para o topo do Hub
         function puxarDadosIA() {
             document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*');
         }
 
-        // Puxa do topo do Hub para o centro (Pedro)
         function transferirParaCentro() {
             document.getElementById('iframe-fin').contentWindow.postMessage({
                 type: 'forceUpdateFinance',
@@ -127,6 +125,15 @@
         }
 
         function resetarTudo() { if(confirm("Zerar?")) { localStorage.clear(); location.reload(); } }
+
+        /* --- AQUI ENTRA O CÓDIGO 2 (Integração de Recebimento) --- */
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'forceUpdateFinance') {
+                // Esse trecho garante que se o próprio Hub precisar se atualizar via mensagem, ele o faça
+                localStorage.setItem('saldo_disponivel', event.data.lucro);
+                localStorage.setItem('capital_investido', event.data.investido);
+            }
+        });
     </script>
 </body>
 </html>
