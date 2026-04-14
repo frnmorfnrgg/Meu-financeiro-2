@@ -3,169 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Financeiro PRO - HUB TOTAL</title>
+    <title>Financeiro PRO - HUB ULTRA v3.0</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #000; color: white; overflow: hidden; height: 100vh; }
+        :root {
+            --primary: #00ff88;
+            --secondary: #00d4ff;
+            --warning: #ffc107;
+            --danger: #ff3e3e;
+            --bg-dark: #0a0a0a;
+            --card-bg: #161616;
+            --text: #ffffff;
+        }
 
-        /* Cabeçalho com Saldos Superiores */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Segoe UI', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text); overflow: hidden; height: 100vh; }
+
+        /* --- HEADER & STATS --- */
         .header {
-            height: 75px; background: #111; display: flex; align-items: center;
-            padding: 0 15px; border-bottom: 2px solid #00ff88; justify-content: space-between;
+            height: 85px; background: #111; display: flex; align-items: center;
+            padding: 0 20px; border-bottom: 2px solid var(--primary); justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
-        .stats { display: flex; gap: 8px; flex-grow: 1; }
-        .stat-box { background: #1a1a1a; padding: 6px 10px; border-radius: 8px; border: 1px solid #333; flex: 1; }
-        .stat-label { font-size: 8px; color: #888; display: block; text-transform: uppercase; }
-        .stat-val { font-size: 13px; font-weight: bold; }
-        .val-lucro { color: #00ff88; }
-        .val-inv { color: #ffc107; }
-
-        .btn-hub {
-            display: none; background: #00d4ff; color: #000; border: none;
-            padding: 10px; border-radius: 8px; font-weight: bold; font-size: 10px;
-            margin-right: 10px; cursor: pointer;
+        .stats-container { display: flex; gap: 12px; flex-grow: 1; margin-right: 15px; }
+        .stat-card { 
+            background: var(--card-bg); padding: 10px 15px; border-radius: 12px; 
+            border: 1px solid #333; flex: 1; transition: 0.3s;
+            display: flex; flex-direction: column; justify-content: center;
         }
+        .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .stat-label { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .val-lucro { color: var(--primary); }
+        .val-inv { color: var(--warning); }
 
-        .menu-btn { width: 28px; height: 18px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
-        .menu-btn span { height: 3px; background: #fff; border-radius: 2px; }
+        /* --- BOTÕES --- */
+        .actions-header { display: flex; gap: 10px; align-items: center; }
+        .btn-main {
+            background: var(--secondary); color: #000; border: none;
+            padding: 12px 18px; border-radius: 10px; font-weight: 900; font-size: 11px;
+            cursor: pointer; transition: 0.2s; text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+        .btn-main:active { transform: scale(0.95); }
+        .menu-toggle { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #222; border-radius: 8px; }
+        .menu-icon { width: 20px; height: 2px; background: #fff; position: relative; }
+        .menu-icon::before, .menu-icon::after { content: ''; position: absolute; width: 20px; height: 2px; background: #fff; left: 0; }
+        .menu-icon::before { top: -6px; } .menu-icon::after { bottom: -6px; }
 
+        /* --- SIDEBAR --- */
         .sidebar {
-            position: fixed; top: 0; right: -280px; width: 260px; height: 100%;
-            background: #111; z-index: 1000; transition: 0.4s; padding-top: 80px;
+            position: fixed; top: 0; right: -300px; width: 280px; height: 100%;
+            background: #111; z-index: 1000; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 90px 20px 20px; border-left: 1px solid #333;
         }
         .sidebar.open { right: 0; }
-        .nav-link { display: block; padding: 20px; color: #ddd; text-decoration: none; border-bottom: 1px solid #222; }
+        .nav-item { 
+            display: flex; align-items: center; padding: 15px; color: #ddd; 
+            text-decoration: none; border-radius: 10px; margin-bottom: 8px; transition: 0.2s;
+        }
+        .nav-item:hover { background: #222; color: var(--primary); }
+        .nav-item.active { background: rgba(0, 255, 136, 0.1); color: var(--primary); border-left: 4px solid var(--primary); }
 
-        .content-wrapper { height: calc(100vh - 75px); position: relative; }
-        .page { position: absolute; width: 100%; height: 100%; display: none; }
-        .page.active { display: block; }
+        /* --- DASHBOARD EXTRA (TOOLSET) --- */
+        .tool-section { margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; }
+        .tool-title { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 15px; }
+        .meta-box { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .meta-progress-bg { width: 100%; height: 8px; background: #333; border-radius: 4px; margin: 10px 0; overflow: hidden; }
+        .meta-progress-bar { width: 0%; height: 100%; background: var(--primary); transition: 1s ease-out; }
+
+        /* --- CONTENT --- */
+        .main-view { height: calc(100vh - 85px); position: relative; }
+        .page { position: absolute; width: 100%; height: 100%; display: none; opacity: 0; transition: 0.4s; }
+        .page.active { display: block; opacity: 1; }
         iframe { width: 100%; height: 100%; border: none; }
         
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; }
+        /* --- NOTIFICAÇÕES --- */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #1a1a1a; border: 1px solid var(--primary); color: white;
+            padding: 15px 30px; border-radius: 50px; z-index: 9999; transition: 0.5s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 999; }
         .overlay.active { display: block; }
 
-        /* Estilo da Mensagem Bonita */
-        #msg-sucesso {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0, 255, 136, 0.95); color: #000; padding: 20px;
-            border-radius: 15px; text-align: center; z-index: 2000; display: none;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5); font-weight: bold;
-        }
+        /* --- PROJEÇÃO --- */
+        .projection-card { background: linear-gradient(135deg, #1a1a1a, #000); padding: 15px; border-radius: 12px; border: 1px solid #333; }
+        .projection-val { font-size: 20px; color: var(--secondary); font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <div id="toast" class="toast">
+        <span id="toast-icon">🚀</span>
+        <span id="toast-msg">Sincronizado com sucesso!</span>
+    </div>
+
     <header class="header">
-        <div class="stats">
-            <div class="stat-box">
-                <span class="stat-label">Lucro Total</span>
-                <span id="saldo-lucro" class="stat-val val-lucro">R$ 0,00</span>
+        <div class="stats-container">
+            <div class="stat-card">
+                <span class="stat-label">Lucro Atual</span>
+                <span id="topo-lucro" class="stat-val val-lucro">R$ 0,00</span>
             </div>
-            <div class="stat-box">
-                <span class="stat-label">Investido IA</span>
-                <span id="saldo-inv" class="stat-val val-inv">R$ 0,00</span>
+            <div class="stat-card">
+                <span class="stat-label">IA Investido</span>
+                <span id="topo-inv" class="stat-val val-inv">R$ 0,00</span>
             </div>
         </div>
         
-        <button id="btn-sync" class="btn-hub" onclick="acaoBotao()">🚀 SINCRONIZAR</button>
-
-        <div class="menu-btn" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+        <div class="actions-header">
+            <button id="btn-master" class="btn-main" onclick="gerenciadorAcao()">Carregando...</button>
+            <div class="menu-toggle" onclick="toggleSidebar()">
+                <div class="menu-icon"></div>
+            </div>
+        </div>
     </header>
 
-    <div id="msg-sucesso">
-        <h2 style="margin-bottom: 10px;">🌟 Parabéns, Pedro!</h2>
-        <p>Seus lucros foram atualizados com sucesso!</p>
-        <p style="font-size: 0.9em; margin-top: 5px;">Continue focado, o topo é apenas o começo.</p>
-    </div>
-
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
     <nav id="sidebar" class="sidebar">
-        <a href="#" class="nav-link" onclick="showPage('fin')">💰 Meu Financeiro 4</a>
-        <a href="#" class="nav-link" onclick="showPage('ia')">🔍 Scanner IA (Cavalo)</a>
-        <a href="#" class="nav-link" style="color: #ff3e3e; margin-top: 20px;" onclick="resetarTudo()">⚠️ Resetar Tudo</a>
+        <div class="tool-title">Navegação</div>
+        <a href="#" class="nav-item active" id="nav-fin" onclick="switchPage('fin')">💰 Painel Financeiro</a>
+        <a href="#" class="nav-item" id="nav-ia" onclick="switchPage('ia')">🔍 Scanner IA</a>
+
+        <div class="tool-section">
+            <div class="tool-title">Meta de Ganhos (R$ 5.000)</div>
+            <div class="meta-box">
+                <div style="display: flex; justify-content: space-between; font-size: 10px;">
+                    <span id="meta-percent">0%</span>
+                    <span id="meta-restante">Faltam R$ 5.000,00</span>
+                </div>
+                <div class="meta-progress-bg">
+                    <div id="meta-bar" class="meta-progress-bar"></div>
+                </div>
+            </div>
+
+            <div class="tool-title">Projeção 30 dias</div>
+            <div class="projection-card">
+                <div class="stat-label">Estimativa Mensal</div>
+                <div id="proj-val" class="projection-val">R$ 0,00</div>
+            </div>
+
+            <button onclick="limparHistorico()" style="background: none; border: 1px solid #333; color: #666; width: 100%; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 10px; cursor: pointer;">
+                Resetar Todos os Dados
+            </button>
+        </div>
     </nav>
 
-    <div class="content-wrapper">
+    <main class="main-view">
         <div id="page-fin" class="page active">
             <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
         </div>
         <div id="page-ia" class="page">
             <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
         </div>
-    </div>
+    </main>
 
     <script>
-        let abaAtual = 'fin';
-        let dados = {
+        // --- CONFIGURAÇÕES GLOBAIS ---
+        const META_VALOR = 5000.00;
+        let estadoApp = {
+            pagina: 'fin',
             lucro: parseFloat(localStorage.getItem('hub_lucro') || 0),
             investido: parseFloat(localStorage.getItem('hub_inv') || 0)
         };
 
-        atualizarTopo();
+        // --- INICIALIZAÇÃO ---
+        window.onload = () => {
+            atualizarUI();
+            switchPage('fin'); // Começa no financeiro
+        };
 
-        function toggleMenu() {
+        // --- NAVEGAÇÃO ---
+        function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
         }
-        
-        function showPage(p) {
-            abaAtual = p;
-            document.querySelectorAll('.page').forEach(c => c.classList.remove('active'));
-            document.getElementById('page-' + p).classList.add('active');
+
+        function switchPage(pageId) {
+            estadoApp.pagina = pageId;
             
-            const btn = document.getElementById('btn-sync');
-            btn.style.display = 'block';
-            btn.innerText = (p === 'ia') ? "📥 ATUALIZAR HUB" : "🚀 LANÇAR NO PAINEL";
+            // UI de abas
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
             
-            toggleMenu();
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('nav-' + pageId).classList.add('active');
+
+            // Atualiza botão principal
+            const btn = document.getElementById('btn-master');
+            if(pageId === 'ia') {
+                btn.innerText = "📥 Atualizar Hub";
+                btn.style.background = "var(--secondary)";
+            } else {
+                btn.innerText = "🚀 Lançar Saldo";
+                btn.style.background = "var(--primary)";
+            }
+
+            if(window.innerWidth < 768) toggleSidebar(); 
         }
 
-        function acaoBotao() {
-            if (abaAtual === 'ia') {
-                document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*');
+        // --- LÓGICA DE DADOS ---
+        function gerenciadorAcao() {
+            if(estadoApp.pagina === 'ia') {
+                // Solicita dados ao Iframe IA
+                showToast("⏳ Escaneando registros da IA...", "🔍");
+                const frameIA = document.getElementById('iframe-ia').contentWindow;
+                frameIA.postMessage({ type: 'requestFullHistory' }, '*');
             } else {
-                enviarParaFinanceiro();
+                // Envia para o Financeiro 4
+                sincronizarComFinanceiro();
             }
         }
 
-        function enviarParaFinanceiro() {
-            document.getElementById('iframe-fin').contentWindow.postMessage({
+        function sincronizarComFinanceiro() {
+            const frameFin = document.getElementById('iframe-fin').contentWindow;
+            frameFin.postMessage({
                 type: 'forceUpdateFinance',
-                lucro: dados.lucro,
-                investido: dados.investido
+                lucro: estadoApp.lucro,
+                investido: estadoApp.investido
             }, '*');
             
-            mostrarMensagem();
+            showToast("Saldo lançado no painel!", "✅");
         }
 
-        function mostrarMensagem() {
-            const msg = document.getElementById('msg-sucesso');
-            msg.style.display = 'block';
-            setTimeout(() => { msg.style.display = 'none'; }, 3500);
-        }
-
-        window.addEventListener('message', function(event) {
+        // --- ESCUTADOR DE MENSAGENS ---
+        window.addEventListener('message', (event) => {
+            // Recebimento da IA
             if (event.data.type === 'sync_history') {
-                dados.lucro = event.data.lucroTotal;
-                dados.investido = event.data.invTotal;
-                localStorage.setItem('hub_lucro', dados.lucro);
-                localStorage.setItem('hub_inv', dados.investido);
-                atualizarTopo();
+                estadoApp.lucro = event.data.lucroTotal;
+                estadoApp.investido = event.data.invTotal;
                 
-                // Após atualizar o Hub, ele já envia automaticamente para o painel
-                enviarParaFinanceiro();
+                // Salva persistente
+                localStorage.setItem('hub_lucro', estadoApp.lucro);
+                localStorage.setItem('hub_inv', estadoApp.investido);
+                
+                atualizarUI();
+                sincronizarComFinanceiro(); // Auto-envio para o financeiro
+                showToast("Hub e Painel Atualizados!", "💰");
             }
         });
 
-        function atualizarTopo() {
-            // Atualiza os valores no cabeçalho
-            document.getElementById('saldo-lucro').innerText = 'R$ ' + dados.lucro.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            document.getElementById('saldo-inv').innerText = 'R$ ' + dados.investido.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        // --- ATUALIZAÇÃO DE INTERFACE ---
+        function atualizarUI() {
+            // Formatação Real
+            const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Topo
+            document.getElementById('topo-lucro').innerText = f(estadoApp.lucro);
+            document.getElementById('topo-inv').innerText = f(estadoApp.investido);
+
+            // Metas
+            const percent = Math.min((estadoApp.lucro / META_VALOR) * 100, 100).toFixed(1);
+            document.getElementById('meta-bar').style.width = percent + "%";
+            document.getElementById('meta-percent').innerText = percent + "%";
+            document.getElementById('meta-restante').innerText = `Faltam ${f(Math.max(META_VALOR - estadoApp.lucro, 0))}`;
+
+            // Projeção (Calcula uma média de crescimento baseada no lucro total)
+            const projecao = estadoApp.lucro * 1.5; // Estimativa simples de 50% de ganho/mês
+            document.getElementById('proj-val').innerText = f(projecao);
         }
 
-        function resetarTudo() {
-            if(confirm("Zerar saldos?")) { localStorage.clear(); location.reload(); }
+        // --- UTILITÁRIOS ---
+        function showToast(msg, icon) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').innerText = icon;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function limparHistorico() {
+            if(confirm("Isso apagará todos os saldos salvos no Hub. Continuar?")) {
+                localStorage.clear();
+                location.reload();
+            }
         }
     </script>
 </body>
