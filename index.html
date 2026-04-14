@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Financeiro PRO - HUB v5.0</title>
+    <title>Financeiro PRO - HUB v6.0</title>
     <style>
         :root {
             --primary: #00ff88;
@@ -14,12 +14,13 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg-dark); color: var(--text); overflow: hidden; height: 100vh; }
+        body { background: var(--bg-dark); color: var(--text); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 
-        /* --- CABEÇALHO ÚNICO (SEM DUPLICAÇÃO) --- */
+        /* --- CABEÇALHO FIXO ÚNICO --- */
         .header {
             height: 85px; background: #111; display: flex; align-items: center;
             padding: 0 20px; border-bottom: 2px solid var(--primary); justify-content: space-between;
+            flex-shrink: 0;
         }
         .stats-container { display: flex; gap: 12px; flex-grow: 1; margin-right: 15px; }
         .stat-card { 
@@ -37,12 +38,22 @@
             cursor: pointer; text-transform: uppercase;
         }
 
-        /* --- CONTEÚDO --- */
-        .main-view { height: calc(100vh - 85px); position: relative; }
+        /* --- ÁREA DO CONTEÚDO --- */
+        .main-view { flex-grow: 1; position: relative; width: 100%; }
         iframe { width: 100%; height: 100%; border: none; }
+
+        /* MENSAGEM BONITA */
+        #msg-sucesso {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: #000; padding: 10px 20px;
+            border-radius: 30px; font-weight: bold; font-size: 14px;
+            display: none; z-index: 9999; box-shadow: 0 5px 15px rgba(0,255,136,0.4);
+        }
     </style>
 </head>
 <body>
+
+    <div id="msg-sucesso">🌟 Saldo atualizado com sucesso!</div>
 
     <header class="header">
         <div class="stats-container">
@@ -64,37 +75,40 @@
     </main>
 
     <script>
-        // Função para capturar e somar os valores automaticamente do Iframe
         function sincronizarAutomatico() {
-            // Solicita os dados para a página de escaneamento
             const frame = document.getElementById('iframe-ia').contentWindow;
+            // Solicita a soma dos registros para a aba IA
             frame.postMessage({ type: 'requestFullHistory' }, '*');
         }
 
-        // Escutador que recebe os valores somados e atualiza o topo
         window.addEventListener('message', (e) => {
             if (e.data.type === 'sync_history' || e.data.type === 'lancar') {
-                const lucroX = e.data.lucroTotal || 0;
-                const investidoX = e.data.invTotal || 0;
+                const lucroTotal = e.data.lucroTotal || 0;
+                const invTotal = e.data.invTotal || 0;
 
-                // Formata e atualiza o "Lucro Total" e "Investido IA"
-                document.getElementById('topo-lucro').innerText = lucroX.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById('topo-inv').innerText = investidoX.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                // 1. Atualiza o topo do Hub
+                document.getElementById('topo-lucro').innerText = lucroTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('topo-inv').innerText = invTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-                // Salva para persistência
-                localStorage.setItem('hub_lucro', lucroX);
-                localStorage.setItem('hub_inv', investidoX);
+                // 2. Salva para não perder ao atualizar a página
+                localStorage.setItem('hub_lucro', lucroTotal);
+                localStorage.setItem('hub_inv', invTotal);
 
-                // Envia de volta para atualizar o saldo disponível no painel central
+                // 3. Envia o saldo para DENTRO da aba de investimento (Iframe)
                 document.getElementById('iframe-ia').contentWindow.postMessage({
                     type: 'forceUpdateFinance',
-                    lucro: lucroX,
-                    investido: investidoX
+                    lucro: lucroTotal,
+                    investido: invTotal
                 }, '*');
+
+                // Exibe mensagem bonita
+                const msg = document.getElementById('msg-sucesso');
+                msg.style.display = 'block';
+                setTimeout(() => { msg.style.display = 'none'; }, 3000);
             }
         });
 
-        // Carrega valores salvos ao iniciar
+        // Carrega os dados ao abrir o site
         window.onload = () => {
             const l = parseFloat(localStorage.getItem('hub_lucro') || 0);
             const i = parseFloat(localStorage.getItem('hub_inv') || 0);
