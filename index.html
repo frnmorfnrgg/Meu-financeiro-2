@@ -3,65 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Financeiro + IA Unificado</title>
+    <title>Financeiro PRO - Hub</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #000; color: white; overflow: hidden; height: 100vh; }
-
-        /* Cabeçalho Fixo */
-        .header {
-            height: 75px; background: #111; display: flex; align-items: center;
-            padding: 0 15px; border-bottom: 2px solid #007bff; justify-content: space-between;
-            position: relative; z-index: 1001;
-        }
-
+        .header { height: 75px; background: #111; display: flex; align-items: center; padding: 0 15px; border-bottom: 2px solid #00ff88; justify-content: space-between; }
         .stats { display: flex; gap: 10px; flex-grow: 1; }
         .stat-box { background: #1a1a1a; padding: 8px 12px; border-radius: 10px; border: 1px solid #333; flex: 1; }
-        .stat-label { font-size: 9px; color: #888; display: block; text-transform: uppercase; margin-bottom: 2px; }
+        .stat-label { font-size: 9px; color: #888; display: block; text-transform: uppercase; }
         .stat-val { font-size: 14px; font-weight: bold; }
         .val-lucro { color: #00ff88; }
         .val-inv { color: #ffc107; }
-
-        /* Botão Lançar Dinâmico */
-        #btn-lancar-hub {
-            display: none; background: #28a745; color: white; border: none;
-            padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 11px;
-            margin-right: 10px; cursor: pointer; box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
-        }
-
-        /* Menu Hambúrguer */
+        #btn-puxar { display: none; background: #00d4ff; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 11px; margin-right: 10px; cursor: pointer; }
         .menu-btn { width: 28px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
-        .menu-btn span { height: 3px; background: #fff; border-radius: 2px; transition: 0.3s; }
-
-        /* Menu Lateral */
-        .sidebar {
-            position: fixed; top: 0; right: -280px; width: 260px; height: 100%;
-            background: #111; z-index: 1000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding-top: 85px; box-shadow: -10px 0 20px rgba(0,0,0,0.8);
-        }
+        .menu-btn span { height: 3px; background: #fff; border-radius: 2px; }
+        .sidebar { position: fixed; top: 0; right: -280px; width: 260px; height: 100%; background: #111; z-index: 1000; transition: 0.4s; padding-top: 85px; }
         .sidebar.open { right: 0; }
-        .nav-link { 
-            display: block; padding: 20px 25px; color: #ddd; text-decoration: none; 
-            border-bottom: 1px solid #222; font-size: 16px; transition: 0.2s;
-        }
-        .nav-link:active { background: #007bff; color: white; }
-
-        /* Áreas de Conteúdo */
-        .content-wrapper { height: calc(100vh - 75px); width: 100%; position: relative; }
-        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
+        .nav-link { display: block; padding: 20px 25px; color: #ddd; text-decoration: none; border-bottom: 1px solid #222; }
+        .content-wrapper { height: calc(100vh - 75px); position: relative; }
+        .page { position: absolute; width: 100%; height: 100%; display: none; }
         .page.active { display: block; }
         iframe { width: 100%; height: 100%; border: none; }
-        
-        /* Overlay */
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; }
         .overlay.active { display: block; }
-
-        /* Botão Reset para o Auto Save */
-        .btn-reset { color: #ff3e3e; font-size: 12px; text-decoration: underline; background: none; border: none; padding: 20px 25px; width: 100%; text-align: left; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <header class="header">
         <div class="stats">
             <div class="stat-box">
@@ -73,85 +40,81 @@
                 <span id="saldo-inv" class="stat-val val-inv">R$ 0,00</span>
             </div>
         </div>
-        
-        <button id="btn-lancar-hub" onclick="solicitarDadosIA()">🚀 LANÇAR</button>
-
-        <div class="menu-btn" onclick="toggleMenu()">
-            <span></span><span></span><span></span>
-        </div>
+        <button id="btn-puxar" onclick="puxarDadosIA()">📥 PUXAR DADOS</button>
+        <div class="menu-btn" onclick="toggleMenu()"><span></span><span></span><span></span></div>
     </header>
 
     <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
-
     <nav id="sidebar" class="sidebar">
         <a href="#" class="nav-link" onclick="showPage('fin')">💰 Meu Financeiro</a>
-        <a href="#" class="nav-link" onclick="showPage('ia')">🔍 Escaneamento com IA</a>
-        <button class="btn-reset" onclick="resetAutoSave()">Resetar Todos os Saldos</button>
+        <a href="#" class="nav-link" onclick="showPage('ia')">🔍 Escaneamento IA</a>
+        <a href="#" class="nav-link" style="color: #ff3e3e;" onclick="resetarTudo()">⚠️ Resetar Saldos</a>
     </nav>
 
     <div class="content-wrapper">
-        <div id="page-fin" class="page active">
-            <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
-        </div>
-        <div id="page-ia" class="page">
-            <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
-        </div>
+        <div id="page-fin" class="page active"><iframe src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe></div>
+        <div id="page-ia" class="page"><iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe></div>
     </div>
 
     <script>
-        // Lógica de Auto Save (LocalStorage)
-        let lucroAcumulado = parseFloat(localStorage.getItem('save_lucro') || 0);
-        let invAcumulado = parseFloat(localStorage.getItem('save_inv') || 0);
+        // Carregamento de Auto Save
+        let lucroSalvo = parseFloat(localStorage.getItem('hub_lucro') || 0);
+        let invSalvo = parseFloat(localStorage.getItem('hub_inv') || 0);
+        atualizarTela();
 
-        // Inicializa a tela com os valores salvos
-        atualizarDisplay();
-
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('active');
+        function toggleMenu() { 
+            document.getElementById('sidebar').classList.toggle('open'); 
+            document.getElementById('overlay').classList.toggle('active'); 
         }
-        
+
         function showPage(p) {
             document.querySelectorAll('.page').forEach(c => c.classList.remove('active'));
             document.getElementById('page-' + p).classList.add('active');
-            
-            // Botão "Lançar" só aparece quando você estiver na aba de IA
-            document.getElementById('btn-lancar-hub').style.display = (p === 'ia') ? 'block' : 'none';
+            // Mostra botão de puxar apenas se estiver na aba de IA
+            document.getElementById('btn-puxar').style.display = (p === 'ia') ? 'block' : 'none';
             toggleMenu();
         }
 
-        // Envia uma mensagem para o Iframe do Cavalo pedindo os dados atuais
-        function solicitarDadosIA() {
-            const frameIA = document.getElementById('iframe-ia').contentWindow;
-            frameIA.postMessage({ type: 'requestData' }, '*');
+        // Envia comando para o iframe da IA solicitar o histórico
+        function puxarDadosIA() { 
+            document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*'); 
         }
 
-        // Ouve a resposta do site de IA e salva
+        // --- INTEGRAÇÃO CÓDIGO 2 (Escutador de Mensagens) ---
         window.addEventListener('message', function(event) {
+            // Caso 1: Sincronização de histórico completo
+            if (event.data.type === 'sync_history') {
+                lucroSalvo = event.data.lucroTotal;
+                invSalvo = event.data.invTotal;
+                salvarDados();
+                atualizarTela();
+                alert("✅ Histórico Sincronizado!");
+            }
+            
+            // Caso 2: Lançamento individual (voto de confiança ou novos registros)
             if (event.data.type === 'lancar') {
-                lucroAcumulado += parseFloat(event.data.lucro || 0);
-                invAcumulado += parseFloat(event.data.investido || 0);
-                
-                // Salva permanentemente no navegador
-                localStorage.setItem('save_lucro', lucroAcumulado);
-                localStorage.setItem('save_inv', invAcumulado);
-                
-                atualizarDisplay();
-                alert("✅ Dados salvos e integrados!");
+                lucroSalvo += parseFloat(event.data.lucro || 0);
+                invSalvo += parseFloat(event.data.investido || 0);
+                salvarDados();
+                atualizarTela();
             }
         });
 
-        function atualizarDisplay() {
-            document.getElementById('saldo-lucro').innerText = 'R$ ' + lucroAcumulado.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            document.getElementById('saldo-inv').innerText = 'R$ ' + invAcumulado.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        function salvarDados() {
+            localStorage.setItem('hub_lucro', lucroSalvo);
+            localStorage.setItem('hub_inv', invSalvo);
         }
 
-        function resetAutoSave() {
-            if(confirm("Deseja zerar todos os saldos acumulados?")) {
-                localStorage.removeItem('save_lucro');
-                localStorage.removeItem('save_inv');
-                location.reload();
-            }
+        function atualizarTela() {
+            document.getElementById('saldo-lucro').innerText = 'R$ ' + lucroSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('saldo-inv').innerText = 'R$ ' + invSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        }
+
+        function resetarTudo() { 
+            if(confirm("Deseja zerar todos os saldos salvos?")) { 
+                localStorage.clear(); 
+                location.reload(); 
+            } 
         }
     </script>
 </body>
