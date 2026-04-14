@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Financeiro PRO - HUB ULTRA v4.0</title>
+    <title>Financeiro PRO - HUB ULTRA v5.0</title>
     <style>
         :root {
             --primary: #00ff88;
@@ -36,7 +36,7 @@
         .btn-main {
             background: var(--secondary); color: #000; border: none;
             padding: 12px 18px; border-radius: 10px; font-weight: 900; font-size: 11px;
-            cursor: pointer; text-transform: uppercase;
+            cursor: pointer; text-transform: uppercase; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
         }
         .menu-toggle { width: 35px; height: 35px; background: #222; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .menu-icon { width: 20px; height: 2px; background: #fff; position: relative; }
@@ -70,7 +70,6 @@
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: #1a1a1a; border: 1px solid var(--primary); color: white;
             padding: 15px 30px; border-radius: 50px; z-index: 9999; transition: 0.5s;
-            text-align: center; font-weight: bold;
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
@@ -80,7 +79,7 @@
 </head>
 <body>
 
-    <div id="toast" class="toast">🚀 Sincronizando Saldos...</div>
+    <div id="toast" class="toast">🚀 Atualizando Dados...</div>
 
     <header class="header">
         <div class="stats-container">
@@ -106,7 +105,7 @@
 
     <nav id="sidebar" class="sidebar">
         <div class="tool-title">Menu Principal</div>
-        <div class="nav-item active" id="nav-fin" onclick="switchPage('fin')">💰 Meu Financeiro</div>
+        <div class="nav-item active" id="nav-fin" onclick="switchPage('fin')">💰 Meu Financeiro 2</div>
         <div class="nav-item" id="nav-ia" onclick="switchPage('ia')">🔍 Scanner IA</div>
 
         <div class="tool-section">
@@ -118,17 +117,17 @@
             
             <div class="tool-title" style="margin-top: 20px;">Estatísticas Rápidas</div>
             <div style="background: #000; padding: 10px; border-radius: 8px; font-size: 11px;">
-                <p>Status: <span style="color: var(--primary);">Ativo</span></p>
+                <p>Status: <span style="color: var(--primary);">Conectado</span></p>
                 <p>Última Sinc: <span id="last-sync">--:--</span></p>
             </div>
 
-            <button onclick="resetarTudo()" style="width: 100%; background: none; border: 1px solid #444; color: #888; padding: 10px; margin-top: 20px; border-radius: 5px; cursor: pointer;">Resetar Sistema</button>
+            <button onclick="resetarTudo()" style="width: 100%; background: none; border: 1px solid #444; color: #888; padding: 10px; margin-top: 20px; border-radius: 5px; cursor: pointer;">Limpar Histórico</button>
         </div>
     </nav>
 
     <main class="main-view">
         <div id="page-fin" class="page active">
-            <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
+            <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-2/"></iframe>
         </div>
         <div id="page-ia" class="page">
             <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
@@ -143,7 +142,6 @@
             inv: parseFloat(localStorage.getItem('hub_inv') || 0)
         };
 
-        // Inicialização
         window.onload = () => { 
             atualizarUI(); 
             switchPage('fin'); 
@@ -158,48 +156,36 @@
             app.view = p;
             document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
             document.getElementById('page-' + p).classList.add('active');
-            
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + p).classList.add('active');
 
             const btn = document.getElementById('btn-master');
             btn.innerText = (p === 'ia') ? "📥 Atualizar Hub" : "🚀 Lançar Saldo";
             
-            if(window.innerWidth < 768 && document.getElementById('sidebar').classList.contains('open')) {
-                toggleSidebar();
-            }
+            if(window.innerWidth < 768 && document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
         }
 
-        // Ação manual do botão superior
         function gerenciadorAcao() {
             if(app.view === 'ia') {
-                showToast("🔍 Sincronizando com Scanner IA...");
+                showToast("🔍 Buscando saldos da IA...");
                 document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*');
             } else {
                 lancarParaFinanceiro();
             }
         }
 
-        // ESCUTADOR UNIVERSAL (Ouve o site Cavalo)
+        // --- ESCUTADOR DE MENSAGENS ---
         window.addEventListener('message', (e) => {
-            // Se receber 'sync_history' (do botão Lançar da IA)
             if (e.data.type === 'sync_history' || e.data.type === 'lancar') {
+                app.lucro = e.data.lucroTotal || 0;
+                app.inv = e.data.invTotal || 0;
                 
-                // 1. Captura os valores vindos da IA
-                app.lucro = e.data.lucroTotal || app.lucro;
-                app.inv = e.data.invTotal || app.inv;
-                
-                // 2. Salva na memória do Hub
                 localStorage.setItem('hub_lucro', app.lucro);
                 localStorage.setItem('hub_inv', app.inv);
                 
-                // 3. Atualiza o topo
                 atualizarUI();
-                
-                // 4. Repassa para o Financeiro Central automaticamente
                 lancarParaFinanceiro();
-                
-                showToast("✅ Saldo consolidado no topo!");
+                showToast("✅ Saldo IA sincronizado com o topo!");
                 
                 const agora = new Date();
                 document.getElementById('last-sync').innerText = 
@@ -209,7 +195,6 @@
         });
 
         function lancarParaFinanceiro() {
-            // Envia os dados para o Iframe do Pedro (Meu Financeiro 4)
             document.getElementById('iframe-fin').contentWindow.postMessage({
                 type: 'forceUpdateFinance',
                 lucro: app.lucro,
@@ -219,12 +204,9 @@
 
         function atualizarUI() {
             const grana = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            
-            // Atualiza os cards superiores
             document.getElementById('topo-lucro').innerText = grana(app.lucro);
             document.getElementById('topo-inv').innerText = grana(app.inv);
 
-            // Atualiza Barra de Meta no Sidebar
             const perc = Math.min((app.lucro / META) * 100, 100).toFixed(1);
             document.getElementById('meta-fill').style.width = perc + "%";
             document.getElementById('meta-txt').innerText = perc + "% Concluído";
@@ -238,7 +220,7 @@
         }
 
         function resetarTudo() {
-            if(confirm("Deseja zerar todos os saldos e o histórico?")) {
+            if(confirm("Deseja limpar todos os saldos?")) {
                 localStorage.clear();
                 location.reload();
             }
