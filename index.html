@@ -3,138 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema Unificado IA</title>
+    <title>Financeiro + IA</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body, html { height: 100%; background: #000; overflow: hidden; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #000; color: white; overflow: hidden; height: 100vh; }
 
-        /* Cabeçalho */
+        /* Cabeçalho do App */
         .header {
-            height: 65px;
-            background: #111;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            border-bottom: 2px solid #007bff;
-            z-index: 1000;
-            position: relative;
+            height: 75px; background: #111; display: flex; align-items: center;
+            padding: 0 15px; border-bottom: 2px solid #007bff; justify-content: space-between;
         }
 
-        .title-area { flex-grow: 1; }
-        .title-area h1 { font-size: 14px; color: #007bff; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Saldo Total no Topo */
-        .total-box {
-            background: #222;
-            padding: 5px 12px;
-            border-radius: 10px;
-            border: 1px solid #333;
-            text-align: right;
-            margin-right: 15px;
-        }
-        .total-label { font-size: 9px; color: #888; display: block; }
-        .total-value { font-size: 16px; font-weight: bold; color: #28a745; }
+        .stats { display: flex; gap: 8px; }
+        .stat-box { background: #222; padding: 6px 12px; border-radius: 8px; border: 1px solid #333; min-width: 100px; }
+        .stat-label { font-size: 10px; color: #888; display: block; text-transform: uppercase; margin-bottom: 2px; }
+        .stat-val { font-size: 14px; font-weight: bold; }
+        .val-lucro { color: #28a745; } /* Verde para Lucro */
+        .val-inv { color: #ffc107; }   /* Amarelo para Investimento */
 
-        /* Menu Burguer */
-        .menu-btn { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
-        .menu-btn span { display: block; height: 3px; width: 100%; background: #fff; border-radius: 2px; transition: 0.3s; }
+        /* Ícone do Menu Superior Direito */
+        .menu-btn { width: 30px; height: 22px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
+        .menu-btn span { height: 3px; background: #fff; border-radius: 2px; }
 
         /* Menu Lateral */
         .sidebar {
-            position: fixed;
-            top: 0; right: -280px;
-            width: 280px; height: 100%;
-            background: #111;
-            z-index: 9999;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding-top: 80px;
-            box-shadow: -10px 0 20px rgba(0,0,0,0.8);
+            position: fixed; top: 0; right: -280px; width: 260px; height: 100%;
+            background: #111; z-index: 1000; transition: 0.3s; padding-top: 80px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
         }
         .sidebar.open { right: 0; }
-        .nav-item {
-            display: block;
-            padding: 20px 25px;
-            color: #ddd;
-            text-decoration: none;
-            font-size: 17px;
-            border-bottom: 1px solid #222;
-        }
-        .nav-item:active { background: #007bff; color: white; }
+        .nav-link { display: block; padding: 20px 25px; color: #fff; text-decoration: none; border-bottom: 1px solid #222; font-size: 16px; }
 
-        /* Area dos Sites */
-        .main-content { width: 100%; height: calc(100% - 65px); }
-        .page { width: 100%; height: 100%; display: none; }
-        .page.active { display: block; }
+        /* Área de Exibição dos Sites */
+        .content { height: calc(100vh - 75px); display: none; }
+        .content.active { display: block; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        .overlay {
-            display: none; position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998;
-        }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
         .overlay.active { display: block; }
     </style>
 </head>
 <body>
 
     <header class="header">
-        <div class="title-area">
-            <h1 id="current-page-name">Meu Financeiro</h1>
+        <div class="stats">
+            <div class="stat-box">
+                <span class="stat-label">Lucro Total</span>
+                <span id="saldo-lucro" class="stat-val val-lucro">R$ 0,00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Investido IA</span>
+                <span id="saldo-inv" class="stat-val val-inv">R$ 0,00</span>
+            </div>
         </div>
-        
-        <div class="total-box">
-            <span class="total-label">SALDO TOTAL</span>
-            <span class="total-value" id="global-balance">R$ 0,00</span>
-        </div>
-
         <div class="menu-btn" onclick="toggleMenu()">
             <span></span><span></span><span></span>
         </div>
     </header>
 
-    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
 
-    <nav class="sidebar" id="sidebar">
-        <a href="#" class="nav-item" onclick="changePage('fin', 'Meu Financeiro')">💰 Meu Financeiro</a>
-        <a href="#" class="nav-item" onclick="changePage('ia', 'Project Escaneamento com IA')">🔍 Escaneamento com IA</a>
+    <nav id="sidebar" class="sidebar">
+        <a href="#" class="nav-link" onclick="showPage('fin')">💰 Meu Financeiro</a>
+        <a href="#" class="nav-link" onclick="showPage('ia')">🔍 Project Escaneamento IA</a>
     </nav>
 
-    <main class="main-content">
-        <div id="page-fin" class="page active">
-            <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
-        </div>
-        <div id="page-ia" class="page">
-            <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
-        </div>
-    </main>
+    <div id="page-fin" class="content active">
+        <iframe src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
+    </div>
+
+    <div id="page-ia" class="content">
+        <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
+    </div>
 
     <script>
+        let lucroTotal = 0;
+        let investimentoTotal = 0;
+
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
         }
-
-        function changePage(pageId, name) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-' + pageId).classList.add('active');
-            document.getElementById('current-page-name').innerText = name;
+        
+        function showPage(p) {
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.getElementById('page-' + p).classList.add('active');
             toggleMenu();
         }
 
-        // ROBÔ DE CAPTURA DE SALDO
-        // Ele "vigia" o site de IA e puxa o valor que aparecer na tela
-        window.addEventListener('message', function(event) {
-            if (event.data.type === 'updateBalance') {
-                const valor = parseFloat(event.data.value) || 0;
-                document.getElementById('global-balance').innerText = 'R$ ' + valor.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        // LÓGICA DE INTEGRAÇÃO (Recebe os dados do site de IA)
+        window.addEventListener('message', function(e) {
+            if (e.data.type === 'lancar') {
+                // Adiciona os valores recebidos aos totais
+                lucroTotal += parseFloat(e.data.lucro || 0);
+                investimentoTotal += parseFloat(e.data.investido || 0);
+                
+                // Atualiza os valores na tela do topo
+                document.getElementById('saldo-lucro').innerText = 'R$ ' + lucroTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                document.getElementById('saldo-inv').innerText = 'R$ ' + investimentoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2});
             }
         });
-
-        // Tenta detectar o saldo automaticamente via leitura de tela do Iframe
-        setInterval(() => {
-            const iframeIA = document.getElementById('iframe-ia');
-            // Nota: Devido a segurança, o navegador pode bloquear leitura direta, 
-            // por isso o postMessage (enviado do outro site) é o método oficial.
-        }, 3000);
     </script>
 </body>
 </html>
