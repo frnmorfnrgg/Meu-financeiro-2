@@ -3,118 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Financeiro PRO - HUB v6.0</title>
+    <title>Financeiro PRO - HUB MASTER</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #00ff88;
             --secondary: #00d4ff;
-            --bg-dark: #0a0a0a;
-            --card-bg: #161616;
+            --bg: #0a0a0a;
+            --card: #161616;
             --text: #ffffff;
+            --danger: #ff4444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg-dark); color: var(--text); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* --- CABEÇALHO FIXO ÚNICO --- */
-        .header {
-            height: 85px; background: #111; display: flex; align-items: center;
+        /* --- HEADER ÚNICO (CORRIGE DUPLICAÇÃO) --- */
+        .header-main {
+            height: 80px; background: #111; display: flex; align-items: center;
             padding: 0 20px; border-bottom: 2px solid var(--primary); justify-content: space-between;
-            flex-shrink: 0;
+            z-index: 1000; flex-shrink: 0;
         }
-        .stats-container { display: flex; gap: 12px; flex-grow: 1; margin-right: 15px; }
-        .stat-card { 
-            background: var(--card-bg); padding: 10px 15px; border-radius: 12px; 
-            border: 1px solid #333; flex: 1; display: flex; flex-direction: column;
+
+        .stats-hub { display: flex; gap: 15px; flex: 1; }
+        .hub-card { 
+            background: var(--card); padding: 10px 15px; border-radius: 12px; 
+            border: 1px solid #333; min-width: 140px; transition: 0.3s;
         }
-        .stat-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 4px; }
-        .stat-val { font-size: 16px; font-weight: 800; }
-        .val-lucro { color: var(--primary); }
+        .hub-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .hub-label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; }
+        .hub-val { font-size: 18px; font-weight: 800; display: block; }
+        .val-lucro { color: var(--primary); text-shadow: 0 0 10px rgba(0,255,136,0.3); }
         .val-inv { color: #ffc107; }
 
-        .btn-lancar {
-            background: var(--secondary); color: #000; border: none;
-            padding: 12px 18px; border-radius: 10px; font-weight: 900; font-size: 11px;
-            cursor: pointer; text-transform: uppercase;
+        /* --- BOTÃO LANÇAR --- */
+        .btn-sync {
+            background: linear-gradient(135deg, var(--secondary), #0088ff);
+            color: #000; border: none; padding: 12px 20px; border-radius: 10px;
+            font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase;
+            display: flex; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        .btn-sync:active { transform: scale(0.95); }
+
+        /* --- LAYOUT EM DUAS COLUNAS --- */
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        /* Sidebar de Ferramentas (Utilidades) */
+        .tools-sidebar {
+            width: 320px; background: #0f0f0f; border-right: 1px solid #222;
+            padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
         }
 
-        /* --- ÁREA DO CONTEÚDO --- */
-        .main-view { flex-grow: 1; position: relative; width: 100%; }
+        /* Área do Iframe */
+        .iframe-area { flex: 1; background: #000; position: relative; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        /* MENSAGEM BONITA */
-        #msg-sucesso {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--primary); color: #000; padding: 10px 20px;
-            border-radius: 30px; font-weight: bold; font-size: 14px;
-            display: none; z-index: 9999; box-shadow: 0 5px 15px rgba(0,255,136,0.4);
+        /* --- MINI FERRAMENTAS --- */
+        .tool-box { background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid #222; }
+        .tool-title { font-size: 12px; color: var(--secondary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        
+        /* Calculadora */
+        .calc-input { width: 100%; background: #000; border: 1px solid #333; padding: 8px; color: #fff; border-radius: 5px; margin-bottom: 10px; font-size: 12px; }
+        .calc-res { font-size: 14px; color: var(--primary); font-weight: bold; text-align: center; display: block; }
+
+        /* Log de Atividades */
+        .log-list { font-size: 11px; color: #aaa; list-style: none; }
+        .log-item { padding: 5px 0; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        .log-time { color: #555; }
+
+        /* Meta de Progresso */
+        .progress-container { width: 100%; height: 10px; background: #222; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+        .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: 1s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+
+        /* Toast de Notificação */
+        #toast {
+            position: fixed; top: 90px; right: 20px; background: var(--primary);
+            color: #000; padding: 12px 25px; border-radius: 8px; font-weight: bold;
+            transform: translateX(200%); transition: 0.5s; z-index: 2000;
+        }
+        #toast.show { transform: translateX(0); }
+
+        @media (max-width: 900px) {
+            .tools-sidebar { display: none; } /* Esconde em telas pequenas para focar no scanner */
         }
     </style>
 </head>
 <body>
 
-    <div id="msg-sucesso">🌟 Saldo atualizado com sucesso!</div>
+    <div id="toast">✅ Saldo Sincronizado!</div>
 
-    <header class="header">
-        <div class="stats-container">
-            <div class="stat-card">
-                <span class="stat-label">Lucro Total</span>
-                <span id="topo-lucro" class="stat-val val-lucro">R$ 0,00</span>
+    <header class="header-main">
+        <div class="stats-hub">
+            <div class="hub-card">
+                <span class="hub-label"><i class="fas fa-chart-line"></i> Lucro Total</span>
+                <span id="lucro-topo" class="hub-val val-lucro">R$ 0,00</span>
             </div>
-            <div class="stat-card">
-                <span class="stat-label">Investido IA</span>
-                <span id="topo-inv" class="stat-val val-inv">R$ 0,00</span>
+            <div class="hub-card">
+                <span class="hub-label"><i class="fas fa-wallet"></i> IA Investido</span>
+                <span id="inv-topo" class="hub-val val-inv">R$ 0,00</span>
             </div>
         </div>
         
-        <button class="btn-lancar" onclick="sincronizarAutomatico()">🚀 Lançar Saldo</button>
+        <button class="btn-sync" onclick="sincronizarSite()">
+            <i class="fas fa-sync-alt"></i> ATUALIZAR HUB
+        </button>
     </header>
 
-    <main class="main-view">
-        <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Meu-financeiro-2/"></iframe>
-    </main>
+    <div class="main-container">
+        <aside class="tools-sidebar">
+            
+            <div class="tool-box">
+                <div class="tool-title"><i class="fas fa-bullseye"></i> Meta Financeira (R$ 10k)</div>
+                <span id="meta-txt" style="font-size: 11px;">0% da jornada concluída</span>
+                <div class="progress-container"><div id="meta-fill" class="progress-bar"></div></div>
+            </div>
+
+            <div class="tool-box">
+                <div class="tool-title"><i class="fas fa-calculator"></i> Projeção 30 Dias (IA)</div>
+                <input type="number" id="calc-val" class="calc-input" placeholder="Valor p/ reinvestir..." oninput="calcularProjecao()">
+                <span class="calc-res" id="calc-res">Resultado: R$ 0,00</span>
+                <p style="font-size: 9px; color: #555; margin-top: 5px;">*Baseado na média de lucro atual dos registros.</p>
+            </div>
+
+            <div class="tool-box">
+                <div class="tool-title"><i class="fas fa-history"></i> Log de Transações</div>
+                <ul class="log-list" id="log-hub">
+                    <li class="log-item"><span>Sistema Iniciado</span> <span class="log-time">Agora</span></li>
+                </ul>
+            </div>
+
+            <div class="tool-box" style="flex: 1;">
+                <div class="tool-title"><i class="fas fa-chart-pie"></i> Distribuição</div>
+                <canvas id="meuGrafico" style="max-height: 150px;"></canvas>
+            </div>
+
+            <button onclick="limparDados()" style="background: none; border: 1px solid #333; color: #555; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 10px;">
+                <i class="fas fa-trash"></i> Resetar Cache do Hub
+            </button>
+        </aside>
+
+        <section class="iframe-area">
+            <iframe id="frame-ia" src="https://frnmorfnrgg.github.io/Meu-financeiro-2/"></iframe>
+        </section>
+    </div>
 
     <script>
-        function sincronizarAutomatico() {
-            const frame = document.getElementById('iframe-ia').contentWindow;
-            // Solicita a soma dos registros para a aba IA
+        // CONFIGURAÇÕES E ESTADO
+        let dadosHub = {
+            lucro: parseFloat(localStorage.getItem('h_lucro') || 0),
+            inv: parseFloat(localStorage.getItem('h_inv') || 0)
+        };
+
+        // INICIALIZAÇÃO
+        window.onload = () => {
+            atualizarInterface();
+            initGrafico();
+        };
+
+        // FUNÇÃO DE SINCRONIZAÇÃO AUTOMÁTICA
+        function sincronizarSite() {
+            const frame = document.getElementById('frame-ia').contentWindow;
+            // Solicita que o site Cavalo some todos os cartões pretos
             frame.postMessage({ type: 'requestFullHistory' }, '*');
         }
 
+        // ESCUTADOR DE EVENTOS (A Mágica acontece aqui)
         window.addEventListener('message', (e) => {
             if (e.data.type === 'sync_history' || e.data.type === 'lancar') {
-                const lucroTotal = e.data.lucroTotal || 0;
-                const invTotal = e.data.invTotal || 0;
+                dadosHub.lucro = e.data.lucroTotal || 0;
+                dadosHub.inv = e.data.invTotal || 0;
 
-                // 1. Atualiza o topo do Hub
-                document.getElementById('topo-lucro').innerText = lucroTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById('topo-inv').innerText = invTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                save();
+                atualizarInterface();
+                addLog(`Lançamento de R$ ${dadosHub.lucro.toFixed(2)} realizado.`);
+                showToast();
 
-                // 2. Salva para não perder ao atualizar a página
-                localStorage.setItem('hub_lucro', lucroTotal);
-                localStorage.setItem('hub_inv', invTotal);
-
-                // 3. Envia o saldo para DENTRO da aba de investimento (Iframe)
-                document.getElementById('iframe-ia').contentWindow.postMessage({
+                // Envia de volta para o financeiro interno para atualizar o "Saldo Disponível"
+                document.getElementById('frame-ia').contentWindow.postMessage({
                     type: 'forceUpdateFinance',
-                    lucro: lucroTotal,
-                    investido: invTotal
+                    lucro: dadosHub.lucro,
+                    investido: dadosHub.inv
                 }, '*');
-
-                // Exibe mensagem bonita
-                const msg = document.getElementById('msg-sucesso');
-                msg.style.display = 'block';
-                setTimeout(() => { msg.style.display = 'none'; }, 3000);
             }
         });
 
-        // Carrega os dados ao abrir o site
-        window.onload = () => {
-            const l = parseFloat(localStorage.getItem('hub_lucro') || 0);
-            const i = parseFloat(localStorage.getItem('hub_inv') || 0);
-            document.getElementById('topo-lucro').innerText = l.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('topo-inv').innerText = i.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        };
+        // UTILIDADES: ATUALIZAR UI
+        function atualizarInterface() {
+            const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            document.getElementById('lucro-topo').innerText = f(dadosHub.lucro);
+            document.getElementById('inv-topo').innerText = f(dadosHub.inv);
+
+            // Barra de Meta (R$ 10.000)
+            const perc = Math.min((dadosHub.lucro / 10000) * 100, 100);
+            document.getElementById('meta-fill').style.width = perc + "%";
+            document.getElementById('meta-txt').innerText = perc.toFixed(1) + "% da meta concluída";
+            
+            updateGrafico();
+        }
+
+        // UTILIDADES: CALCULADORA IA
+        function calcularProjecao() {
+            const val = parseFloat(document.getElementById('calc-val').value || 0);
+            const r = val * 1.45; // Simulação de 45% de lucro médio
+            document.getElementById('calc-res').innerText = `Resultado Est.: R$ ${r.toFixed(2)}`;
+        }
+
+        // UTILIDADES: LOGS
+        function addLog(msg) {
+            const log = document.getElementById('log-hub');
+            const item = document.createElement('li');
+            item.className = 'log-item';
+            item.innerHTML = `<span>${msg}</span> <span class="log-time">${new Date().toLocaleTimeString()}</span>`;
+            log.prepend(item);
+            if(log.children.length > 5) log.lastChild.remove();
+        }
+
+        // UTILIDADES: TOAST
+        function showToast() {
+            const t = document.getElementById('toast');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // GRAFICO [Chart.js]
+        let meuGrafico;
+        function initGrafico() {
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            meuGrafico = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lucro', 'Investido'],
+                    datasets: [{
+                        data: [dadosHub.lucro, dadosHub.inv],
+                        backgroundColor: ['#00ff88', '#ffc107'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, cutout: '70%' }
+            });
+        }
+
+        function updateGrafico() {
+            if(meuGrafico) {
+                meuGrafico.data.datasets[0].data = [dadosHub.lucro, dadosHub.inv];
+                meuGrafico.update();
+            }
+        }
+
+        function save() {
+            localStorage.setItem('h_lucro', dadosHub.lucro);
+            localStorage.setItem('h_inv', dadosHub.inv);
+        }
+
+        function limparDados() {
+            if(confirm("Deseja resetar o HUB?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
     </script>
 </body>
 </html>
