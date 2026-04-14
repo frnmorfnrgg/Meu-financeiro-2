@@ -63,4 +63,17 @@
 
     <script src="js/script.js"></script>
 </body>
+    <script>
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'forceUpdateFinance') {
+        // Isso grava o dinheiro na memória do site atual
+        localStorage.setItem('saldo_disponivel', event.data.lucro);
+        localStorage.setItem('capital_investido', event.data.investido);
+        
+        // Faz a página ler os novos valores
+        location.reload(); 
+    }
+});
+    </script>
+    
 </html>
