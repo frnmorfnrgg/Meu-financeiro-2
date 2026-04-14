@@ -52,12 +52,11 @@
     </nav>
 
     <div class="content-wrapper">
-        <div id="page-fin" class="page active"><iframe src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe></div>
+        <div id="page-fin" class="page active"><iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe></div>
         <div id="page-ia" class="page"><iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe></div>
     </div>
 
     <script>
-        // Carregamento de Auto Save
         let lucroSalvo = parseFloat(localStorage.getItem('hub_lucro') || 0);
         let invSalvo = parseFloat(localStorage.getItem('hub_inv') || 0);
         atualizarTela();
@@ -70,40 +69,35 @@
         function showPage(p) {
             document.querySelectorAll('.page').forEach(c => c.classList.remove('active'));
             document.getElementById('page-' + p).classList.add('active');
-            // Mostra botão de puxar apenas se estiver na aba de IA
             document.getElementById('btn-puxar').style.display = (p === 'ia') ? 'block' : 'none';
             toggleMenu();
         }
 
-        // Envia comando para o iframe da IA solicitar o histórico
         function puxarDadosIA() { 
             document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*'); 
         }
 
-        // --- INTEGRAÇÃO CÓDIGO 2 (Escutador de Mensagens) ---
         window.addEventListener('message', function(event) {
-            // Caso 1: Sincronização de histórico completo
             if (event.data.type === 'sync_history') {
                 lucroSalvo = event.data.lucroTotal;
                 invSalvo = event.data.invTotal;
-                salvarDados();
+                
+                // SALVANDO NO HUB
+                localStorage.setItem('hub_lucro', lucroSalvo);
+                localStorage.setItem('hub_inv', invSalvo);
+                
+                // ENVIANDO PARA O FINANCEIRO INTERNO (Para preencher os campos da imagem)
+                const frameFin = document.getElementById('iframe-fin').contentWindow;
+                frameFin.postMessage({
+                    type: 'updateInternalFinance',
+                    lucro: lucroSalvo,
+                    investido: invSalvo
+                }, '*');
+
                 atualizarTela();
-                alert("✅ Histórico Sincronizado!");
-            }
-            
-            // Caso 2: Lançamento individual (voto de confiança ou novos registros)
-            if (event.data.type === 'lancar') {
-                lucroSalvo += parseFloat(event.data.lucro || 0);
-                invSalvo += parseFloat(event.data.investido || 0);
-                salvarDados();
-                atualizarTela();
+                alert("✅ Saldo enviado para a conta de PEDRO!");
             }
         });
-
-        function salvarDados() {
-            localStorage.setItem('hub_lucro', lucroSalvo);
-            localStorage.setItem('hub_inv', invSalvo);
-        }
 
         function atualizarTela() {
             document.getElementById('saldo-lucro').innerText = 'R$ ' + lucroSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2});
@@ -111,7 +105,7 @@
         }
 
         function resetarTudo() { 
-            if(confirm("Deseja zerar todos os saldos salvos?")) { 
+            if(confirm("Deseja zerar todos os saldos?")) { 
                 localStorage.clear(); 
                 location.reload(); 
             } 
@@ -119,3 +113,14 @@
     </script>
 </body>
 </html>
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'updateInternalFinance') {
+        // Isso assume que o seu financeiro salva os dados com esses nomes
+        localStorage.setItem('saldo_disponivel', event.data.lucro);
+        localStorage.setItem('capital_investido', event.data.investido);
+        
+        // Recarrega os campos na tela se a função de render existir
+        if(typeof render === "function") render();
+        else location.reload(); 
+    }
+});
