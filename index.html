@@ -49,7 +49,7 @@
             background: #111; z-index: 1000; transition: 0.5s; padding: 90px 20px 20px;
         }
         .sidebar.open { right: 0; }
-        .nav-item { display: block; padding: 15px; color: #ddd; text-decoration: none; border-radius: 10px; margin-bottom: 8px; }
+        .nav-item { display: block; padding: 15px; color: #ddd; text-decoration: none; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
         .nav-item.active { background: rgba(0, 255, 136, 0.1); color: var(--primary); border-left: 4px solid var(--primary); }
 
         /* --- FERRAMENTAS EXTRAS --- */
@@ -70,6 +70,7 @@
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: #1a1a1a; border: 1px solid var(--primary); color: white;
             padding: 15px 30px; border-radius: 50px; z-index: 9999; transition: 0.5s;
+            text-align: center; font-weight: bold;
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
@@ -87,7 +88,7 @@
                 <span class="stat-label">Lucro Total</span>
                 <span id="topo-lucro" class="stat-val val-lucro">R$ 0,00</span>
             </div>
-            <div class="stat-box" style="background: var(--card-bg); padding: 10px 15px; border-radius: 12px; border: 1px solid #333; flex: 1;">
+            <div class="stat-card">
                 <span class="stat-label">Investido IA</span>
                 <span id="topo-inv" class="stat-val val-inv">R$ 0,00</span>
             </div>
@@ -105,8 +106,8 @@
 
     <nav id="sidebar" class="sidebar">
         <div class="tool-title">Menu Principal</div>
-        <a href="#" class="nav-item active" id="nav-fin" onclick="switchPage('fin')">💰 Meu Financeiro</a>
-        <a href="#" class="nav-item" id="nav-ia" onclick="switchPage('ia')">🔍 Scanner IA</a>
+        <div class="nav-item active" id="nav-fin" onclick="switchPage('fin')">💰 Meu Financeiro</div>
+        <div class="nav-item" id="nav-ia" onclick="switchPage('ia')">🔍 Scanner IA</div>
 
         <div class="tool-section">
             <div class="tool-title">Meta Pedro (R$ 5.000)</div>
@@ -142,8 +143,11 @@
             inv: parseFloat(localStorage.getItem('hub_inv') || 0)
         };
 
-        // Atualiza a tela ao abrir
-        window.onload = () => { atualizarUI(); switchPage('fin'); };
+        // Inicialização
+        window.onload = () => { 
+            atualizarUI(); 
+            switchPage('fin'); 
+        };
 
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
@@ -161,43 +165,51 @@
             const btn = document.getElementById('btn-master');
             btn.innerText = (p === 'ia') ? "📥 Atualizar Hub" : "🚀 Lançar Saldo";
             
-            if(window.innerWidth < 768 && document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+            if(window.innerWidth < 768 && document.getElementById('sidebar').classList.contains('open')) {
+                toggleSidebar();
+            }
         }
 
-        // --- A MÁGICA DA SINCRONIZAÇÃO ---
+        // Ação manual do botão superior
         function gerenciadorAcao() {
             if(app.view === 'ia') {
-                showToast("🔍 Buscando dados no Scanner...");
+                showToast("🔍 Sincronizando com Scanner IA...");
                 document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*');
             } else {
                 lancarParaFinanceiro();
             }
         }
 
-        // Esta função escuta o site Cavalo
+        // ESCUTADOR UNIVERSAL (Ouve o site Cavalo)
         window.addEventListener('message', (e) => {
-            // Aceita tanto 'sync_history' quanto 'lancar'
+            // Se receber 'sync_history' (do botão Lançar da IA)
             if (e.data.type === 'sync_history' || e.data.type === 'lancar') {
                 
-                // Pega os valores enviados pelo site Cavalo
+                // 1. Captura os valores vindos da IA
                 app.lucro = e.data.lucroTotal || app.lucro;
                 app.inv = e.data.invTotal || app.inv;
                 
-                // Salva no seu navegador
+                // 2. Salva na memória do Hub
                 localStorage.setItem('hub_lucro', app.lucro);
                 localStorage.setItem('hub_inv', app.inv);
                 
+                // 3. Atualiza o topo
                 atualizarUI();
-                lancarParaFinanceiro(); // Já manda pro centro automaticamente
-                showToast("💰 Saldo capturado e atualizado!");
+                
+                // 4. Repassa para o Financeiro Central automaticamente
+                lancarParaFinanceiro();
+                
+                showToast("✅ Saldo consolidado no topo!");
                 
                 const agora = new Date();
-                document.getElementById('last-sync').innerText = agora.getHours() + ":" + agora.getMinutes();
+                document.getElementById('last-sync').innerText = 
+                    agora.getHours().toString().padStart(2, '0') + ":" + 
+                    agora.getMinutes().toString().padStart(2, '0');
             }
         });
 
         function lancarParaFinanceiro() {
-            // Manda para o saldo central
+            // Envia os dados para o Iframe do Pedro (Meu Financeiro 4)
             document.getElementById('iframe-fin').contentWindow.postMessage({
                 type: 'forceUpdateFinance',
                 lucro: app.lucro,
@@ -208,11 +220,11 @@
         function atualizarUI() {
             const grana = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             
-            // Atualiza o Topo
+            // Atualiza os cards superiores
             document.getElementById('topo-lucro').innerText = grana(app.lucro);
             document.getElementById('topo-inv').innerText = grana(app.inv);
 
-            // Atualiza Barra de Meta
+            // Atualiza Barra de Meta no Sidebar
             const perc = Math.min((app.lucro / META) * 100, 100).toFixed(1);
             document.getElementById('meta-fill').style.width = perc + "%";
             document.getElementById('meta-txt').innerText = perc + "% Concluído";
@@ -226,7 +238,7 @@
         }
 
         function resetarTudo() {
-            if(confirm("Zerar todos os dados do Hub?")) {
+            if(confirm("Deseja zerar todos os saldos e o histórico?")) {
                 localStorage.clear();
                 location.reload();
             }
