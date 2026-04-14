@@ -17,15 +17,17 @@
         .val-lucro { color: #00ff88; }
         .val-inv { color: #ffc107; }
 
-        /* Botões */
+        /* Botões Superiores */
         .btn-action { background: #00d4ff; color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 10px; margin-right: 10px; cursor: pointer; display: none; }
         .menu-btn { width: 28px; height: 18px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
         .menu-btn span { height: 3px; background: #fff; border-radius: 2px; }
 
-        /* Sidebar e Pages */
+        /* Menu Lateral */
         .sidebar { position: fixed; top: 0; right: -280px; width: 260px; height: 100%; background: #111; z-index: 1000; transition: 0.4s; padding-top: 80px; }
         .sidebar.open { right: 0; }
         .nav-link { display: block; padding: 20px; color: #ddd; text-decoration: none; border-bottom: 1px solid #222; }
+
+        /* Conteúdo */
         .content-wrapper { height: calc(100vh - 75px); position: relative; }
         .page { position: absolute; width: 100%; height: 100%; display: none; }
         .page.active { display: block; }
@@ -59,7 +61,7 @@
     <nav id="sidebar" class="sidebar">
         <a href="#" class="nav-link" onclick="showPage('fin')">💰 Meu Financeiro (Pedro)</a>
         <a href="#" class="nav-link" onclick="showPage('ia')">🔍 Scanner IA (Cavalo)</a>
-        <a href="#" class="nav-link" style="color: #ff3e3e;" onclick="resetarTudo()">⚠️ Resetar</a>
+        <a href="#" class="nav-link" style="color: #ff3e3e;" onclick="resetarTudo()">⚠️ Resetar Dados</a>
     </nav>
 
     <div class="content-wrapper">
@@ -71,69 +73,6 @@
         </div>
     </div>
 
-    <script>
-        let dados = {
-            lucro: parseFloat(localStorage.getItem('hub_lucro') || 0),
-            investido: parseFloat(localStorage.getItem('hub_inv') || 0)
-        };
-
-        atualizarTopo();
-
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('active');
-        }
-        
-        function showPage(p) {
-            document.querySelectorAll('.page').forEach(c => c.classList.remove('active'));
-            document.getElementById('page-' + p).classList.add('active');
-            
-            // Lógica dos botões
-            document.getElementById('btn-puxar-ia').style.display = (p === 'ia') ? 'block' : 'none';
-            document.getElementById('btn-lancar-pedro').style.display = (p === 'fin') ? 'block' : 'none';
-            
-            toggleMenu();
-        }
-
-        function puxarDadosIA() {
-            document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*');
-        }
-
-        function transferirParaCentro() {
-            document.getElementById('iframe-fin').contentWindow.postMessage({
-                type: 'forceUpdateFinance',
-                lucro: dados.lucro,
-                investido: dados.investido
-            }, '*');
-            alert("✅ Saldo enviado para as caixas centrais!");
-        }
-
-        window.addEventListener('message', function(event) {
-            if (event.data.type === 'sync_history') {
-                dados.lucro = event.data.lucroTotal;
-                dados.investido = event.data.invTotal;
-                localStorage.setItem('hub_lucro', dados.lucro);
-                localStorage.setItem('hub_inv', dados.investido);
-                atualizarTopo();
-                alert("✅ Hub Atualizado! Vá na conta do Pedro e clique em LANÇAR.");
-            }
-        });
-
-        function atualizarTopo() {
-            document.getElementById('saldo-lucro').innerText = 'R$ ' + dados.lucro.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            document.getElementById('saldo-inv').innerText = 'R$ ' + dados.investido.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-        }
-
-        function resetarTudo() { if(confirm("Zerar?")) { localStorage.clear(); location.reload(); } }
-
-        /* --- AQUI ENTRA O CÓDIGO 2 (Integração de Recebimento) --- */
-        window.addEventListener('message', function(event) {
-            if (event.data.type === 'forceUpdateFinance') {
-                // Esse trecho garante que se o próprio Hub precisar se atualizar via mensagem, ele o faça
-                localStorage.setItem('saldo_disponivel', event.data.lucro);
-                localStorage.setItem('capital_investido', event.data.investido);
-            }
-        });
-    </script>
+    <script src="js/script.js"></script>
 </body>
 </html>
