@@ -3,32 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Financeiro PRO - HUB</title>
+    <title>Financeiro PRO - HUB TOTAL</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #000; color: white; overflow: hidden; height: 100vh; }
-        .header { height: 75px; background: #111; display: flex; align-items: center; padding: 0 15px; border-bottom: 2px solid #00ff88; justify-content: space-between; }
+
+        /* Cabeçalho com Saldos */
+        .header {
+            height: 75px; background: #111; display: flex; align-items: center;
+            padding: 0 15px; border-bottom: 2px solid #00ff88; justify-content: space-between;
+        }
         .stats { display: flex; gap: 8px; flex-grow: 1; }
         .stat-box { background: #1a1a1a; padding: 6px 10px; border-radius: 8px; border: 1px solid #333; flex: 1; }
         .stat-label { font-size: 8px; color: #888; display: block; text-transform: uppercase; }
         .stat-val { font-size: 13px; font-weight: bold; }
         .val-lucro { color: #00ff88; }
         .val-inv { color: #ffc107; }
-        .btn-action { background: #00d4ff; color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 10px; margin-right: 10px; cursor: pointer; display: none; }
+
+        /* Botões de Ação */
+        .btn-hub {
+            display: none; background: #00d4ff; color: #000; border: none;
+            padding: 10px; border-radius: 8px; font-weight: bold; font-size: 10px;
+            margin-right: 10px; cursor: pointer;
+        }
+
         .menu-btn { width: 28px; height: 18px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
         .menu-btn span { height: 3px; background: #fff; border-radius: 2px; }
-        .sidebar { position: fixed; top: 0; right: -280px; width: 260px; height: 100%; background: #111; z-index: 1000; transition: 0.4s; padding-top: 80px; }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed; top: 0; right: -280px; width: 260px; height: 100%;
+            background: #111; z-index: 1000; transition: 0.4s; padding-top: 80px;
+        }
         .sidebar.open { right: 0; }
         .nav-link { display: block; padding: 20px; color: #ddd; text-decoration: none; border-bottom: 1px solid #222; }
+
+        /* Área dos IFrames */
         .content-wrapper { height: calc(100vh - 75px); position: relative; }
         .page { position: absolute; width: 100%; height: 100%; display: none; }
         .page.active { display: block; }
         iframe { width: 100%; height: 100%; border: none; }
+        
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; }
         .overlay.active { display: block; }
     </style>
 </head>
 <body>
+
     <header class="header">
         <div class="stats">
             <div class="stat-box">
@@ -40,40 +61,89 @@
                 <span id="saldo-inv" class="stat-val val-inv">R$ 0,00</span>
             </div>
         </div>
-        <button id="btn-puxar-ia" class="btn-action" onclick="puxarDadosIA()">📥 ATUALIZAR HUB</button>
-        <button id="btn-lancar-pedro" class="btn-action" onclick="transferirParaCentro()">🚀 LANÇAR NO PAINEL</button>
+        
+        <button id="btn-sync" class="btn-hub" onclick="acaoBotao()">📥 ATUALIZAR</button>
+
         <div class="menu-btn" onclick="toggleMenu()"><span></span><span></span><span></span></div>
     </header>
 
     <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
     <nav id="sidebar" class="sidebar">
-        <a href="#" class="nav-link" onclick="showPage('fin')">💰 Meu Financeiro</a>
-        <a href="#" class="nav-link" onclick="showPage('ia')">🔍 Scanner IA</a>
-        <a href="#" class="nav-link" style="color: #ff3e3e;" onclick="resetarTudo()">⚠️ Resetar</a>
+        <a href="#" class="nav-link" onclick="showPage('fin')">💰 Meu Financeiro 4</a>
+        <a href="#" class="nav-link" onclick="showPage('ia')">🔍 Scanner IA (Cavalo)</a>
+        <a href="#" class="nav-link" style="color: #ff3e3e; margin-top: 20px;" onclick="resetarTudo()">⚠️ Resetar Tudo</a>
     </nav>
 
     <div class="content-wrapper">
         <div id="page-fin" class="page active">
-            <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-2/"></iframe>
+            <iframe id="iframe-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
         </div>
         <div id="page-ia" class="page">
             <iframe id="iframe-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
         </div>
     </div>
 
-    <script src="js/script.js"></script>
-</body>
     <script>
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'forceUpdateFinance') {
-        // Isso grava o dinheiro na memória do site atual
-        localStorage.setItem('saldo_disponivel', event.data.lucro);
-        localStorage.setItem('capital_investido', event.data.investido);
+        let abaAtual = 'fin';
+        let dados = {
+            lucro: parseFloat(localStorage.getItem('hub_lucro') || 0),
+            investido: parseFloat(localStorage.getItem('hub_inv') || 0)
+        };
+
+        atualizarTopo();
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+        }
         
-        // Faz a página ler os novos valores
-        location.reload(); 
-    }
-});
+        function showPage(p) {
+            abaAtual = p;
+            document.querySelectorAll('.page').forEach(c => c.classList.remove('active'));
+            document.getElementById('page-' + p).classList.add('active');
+            
+            const btn = document.getElementById('btn-sync');
+            btn.style.display = 'block';
+            btn.innerText = (p === 'ia') ? "📥 ATUALIZAR HUB" : "🚀 LANÇAR NO PAINEL";
+            
+            toggleMenu();
+        }
+
+        function acaoBotao() {
+            if (abaAtual === 'ia') {
+                // Puxa dados do site Cavalo
+                document.getElementById('iframe-ia').contentWindow.postMessage({ type: 'requestFullHistory' }, '*');
+            } else {
+                // Manda dados para o Financeiro 4
+                document.getElementById('iframe-fin').contentWindow.postMessage({
+                    type: 'forceUpdateFinance',
+                    lucro: dados.lucro,
+                    investido: dados.investido
+                }, '*');
+                alert("🚀 Saldo enviado para as caixas do Financeiro!");
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'sync_history') {
+                dados.lucro = event.data.lucroTotal;
+                dados.investido = event.data.invTotal;
+                localStorage.setItem('hub_lucro', dados.lucro);
+                localStorage.setItem('hub_inv', dados.investido);
+                atualizarTopo();
+                alert("✅ Hub Sincronizado!");
+            }
+        });
+
+        function atualizarTopo() {
+            document.getElementById('saldo-lucro').innerText = 'R$ ' + dados.lucro.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('saldo-inv').innerText = 'R$ ' + dados.investido.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        }
+
+        function resetarTudo() {
+            if(confirm("Zerar saldos?")) { localStorage.clear(); location.reload(); }
+        }
     </script>
-    
+</body>
 </html>
