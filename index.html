@@ -3,249 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FINANCEIRO PRO | EXCLUSIVE</title>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Finance PRO ™ Exclusive</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-
-        :root {
-            --primary: #00ff88;
-            --secondary: #00d4ff;
-            --bg: #000000; /* Preto absoluto para sumir com bordas */
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
-            --neon: #00ff88;
+        :root { 
+            --neon: #00ff88; --bg: #050505; --card: #121212; --blue: #00d4ff; 
+            --red: #ff3e3e; --border: rgba(255,255,255,0.1);
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); color: white; overflow-x: hidden; padding-bottom: 30px; min-height: 100vh; }
         
-        /* Ajuste para não ter scroll na página principal */
-        body { 
-            background: var(--bg); 
-            color: #fff; 
-            height: 100vh; 
-            width: 100vw;
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-        }
-
-        /* TELA DE LOGIN ADAPTADA */
-        #auth-screen { position: fixed; inset: 0; background: #000; z-index: 10001; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: #111; padding: 30px; border-radius: 25px; width: 90%; max-width: 350px; text-align: center; border: 1px solid #222; }
+        #auth-screen { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: #111; padding: 30px; border-radius: 30px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #222; }
         .auth-card input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; background: #000; color: white; outline: none; font-size: 16px; }
         .btn-auth { width: 100%; padding: 18px; border-radius: 12px; border: none; background: var(--neon); color: #000; font-weight: bold; cursor: pointer; }
 
-        /* HEADER COMPACTO PARA CELULAR */
         header {
-            height: auto; 
-            padding: 10px 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px;
-            background: rgba(10, 10, 10, 0.95); 
-            backdrop-filter: blur(15px); 
-            border-bottom: 1px solid var(--border);
-            z-index: 1000;
+            padding: 20px; background: rgba(10,10,10,0.9); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
         }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .stat-card { background: var(--card); padding: 12px; border-radius: 15px; border: 1px solid var(--border); text-align: center; }
+        .stat-label { font-size: 9px; color: #888; text-transform: uppercase; font-weight: bold; }
+        .stat-value { font-size: 16px; font-weight: 800; margin-top: 5px; }
 
-        .stats-container { display: flex; gap: 8px; width: 100%; }
-        .stat-card {
-            background: var(--glass); 
-            border: 1px solid var(--border); 
-            padding: 8px 12px;
-            border-radius: 12px; 
-            flex: 1; /* Faz os cards dividirem a tela igual */
-            text-align: center;
+        /* NOVO: CARD DE SALDO ACUMULADO */
+        .wallet-card { 
+            background: linear-gradient(135deg, #111 0%, #050505 100%); 
+            padding: 20px; border-radius: 15px; border: 1px solid var(--neon); 
+            text-align: center; margin-bottom: 15px; position: relative;
+            overflow: hidden;
         }
-        .label { font-size: 7px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 2px; }
-        .value { font-size: 14px; font-weight: 800; display: block; }
-        .p-color { color: var(--primary); }
+        .wallet-card::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0,255,136,0.05) 0%, transparent 70%); }
 
-        /* NAVEGAÇÃO LADO A LADO */
-        .header-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-        .nav-tabs { background: #111; padding: 3px; border-radius: 10px; display: flex; gap: 3px; border: 1px solid var(--border); flex: 1; }
-        .tab-btn {
-            flex: 1;
-            padding: 8px 5px; 
-            border: none; 
-            background: transparent; 
-            color: #555;
-            font-size: 9px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            border-radius: 7px;
-            text-transform: uppercase; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            gap: 4px;
-        }
-        .tab-btn.active { background: var(--primary); color: #000; }
-
-        .btn-sync {
-            background: #fff; 
-            color: #000; 
-            border: none; 
-            padding: 8px 12px; 
-            border-radius: 8px; 
-            font-weight: 800; 
-            font-size: 9px; 
-            text-transform: uppercase;
-        }
-
-        /* MAIN OCUPANDO TUDO SEM ESPAÇOS PRETOS */
-        main { 
-            flex: 1; 
-            width: 100%;
-            height: 100%;
-            position: relative; 
-            background: #000;
-        }
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .input-box { background: #1a1a1a; padding: 12px; border-radius: 12px; border: 1px solid #333; margin-bottom: 10px; }
+        .input-box label { display: block; font-size: 10px; color: #888; margin-bottom: 4px; }
+        .input-box input { width: 100%; background: transparent; border: none; color: white; font-size: 16px; outline: none; }
         
-        .viewport { 
-            width: 100%; 
-            height: 100%; 
-            display: none; 
-        }
-        .viewport.active { display: block; }
-        
-        /* Ajuste do Iframe para não ter bordas e ser full screen */
-        iframe { 
-            width: 100%; 
-            height: 100%; 
-            border: none; 
-            display: block;
-        }
+        .btn-save { width: 100%; background: var(--neon); color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; }
 
-        /* SweetAlert Custom */
-        .swal2-popup { border-radius: 20px !important; border: 1px solid var(--primary) !important; font-size: 14px !important; }
+        .hist-item { 
+            background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 12px; 
+            border: 1px solid #333; position: relative; border-left: 5px solid #ffaa00;
+        }
+        .btn-del { position: absolute; right: 10px; top: 10px; color: var(--red); background: none; border: none; font-size: 22px; cursor: pointer; }
+        .status-tag { font-size: 10px; padding: 3px 8px; border-radius: 5px; font-weight: bold; }
+        .received { color: var(--neon); }
+
+        .btn-check { width: 100%; margin-top: 12px; padding: 10px; border-radius: 8px; border: 1px solid var(--neon); background: transparent; color: var(--neon); font-weight: bold; cursor: pointer; }
+        .btn-withdraw { background: none; border: 1px solid #444; color: #888; padding: 5px 10px; border-radius: 5px; font-size: 10px; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
     <div class="auth-card">
-        <h1 style="color: var(--neon); margin-bottom: 20px; font-size: 24px;">Finance PRO</h1>
-        <input type="text" id="auth-user" placeholder="ID de Usuário">
-        <input type="password" id="auth-pass" placeholder="Senha">
-        <button class="btn-auth" onclick="handleAuth()">ENTRAR</button>
+        <h1 style="color: var(--neon); margin-bottom: 20px;">Finance PRO</h1>
+        <input type="text" id="userField" placeholder="Seu ID">
+        <input type="password" id="passField" placeholder="Senha">
+        <button class="btn-auth" onclick="handleLogin()">ENTRAR</button>
     </div>
 </div>
 
-<div id="app-content" style="display: none; height: 100vh; flex-direction: column;">
+<div id="app" style="display:none">
     <header>
-        <div class="stats-container">
-            <div class="stat-card">
-                <span class="label">Saldo Histórico</span>
-                <span id="txt-lucro" class="value p-color">R$ 0,00</span>
-            </div>
-            <div class="stat-card">
-                <span class="label">Investimento</span>
-                <span id="txt-inv" class="value" style="color:var(--secondary)">R$ 0,00</span>
-            </div>
+        <div class="wallet-card">
+            <span class="stat-label" style="color: var(--neon)">Saldo Disponível (Cofre)</span>
+            <div id="label-carteira" style="font-size: 28px; font-weight: 900; color: #fff; margin: 5px 0;">R$ 0,00</div>
+            <button class="btn-withdraw" onclick="limparCofre()">LIMPAR COFRE</button>
         </div>
 
-        <div class="header-bottom">
-            <nav class="nav-tabs">
-                <button class="tab-btn active" onclick="switchPage('ia', this)">
-                    <i class="fas fa-robot"></i> Cavalo
-                </button>
-                <button class="tab-btn" onclick="switchPage('fin', this)">
-                    <i class="fas fa-wallet"></i> Financeiro
-                </button>
-            </nav>
-            <button class="btn-sync" onclick="syncAll()">
-                <i class="fas fa-sync"></i>
-            </button>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Lucro Pendente</span>
+                <span id="label-lucro" class="stat-value" style="color: #ffaa00">R$ 0,00</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Em Operação</span>
+                <span id="label-inv" class="stat-value" style="color: var(--blue)">R$ 0,00</span>
+            </div>
         </div>
     </header>
 
-    <main>
-        <div id="page-ia" class="viewport active">
-            <iframe id="frame-ia" src="https://frnmorfnrgg.github.io/Cavalo/"></iframe>
+    <div class="container">
+        <div class="card">
+            <div class="input-box"><label>VALOR DO INVESTIMENTO</label><input type="number" id="inp-p" placeholder="0.00"></div>
+            <div class="input-box"><label>TAXA (%)</label><input type="number" id="inp-i" placeholder="0"></div>
+            <div class="input-box"><label>PRAZO (DIAS)</label><input type="number" id="inp-n" value="1"></div>
+            <button class="btn-save" onclick="adicionarRegistro()">LANÇAR NO SCANNER</button>
         </div>
-        <div id="page-fin" class="viewport">
-            <iframe id="frame-fin" src="https://frnmorfnrgg.github.io/Meu-financeiro-4/"></iframe>
-        </div>
-    </main>
+
+        <h3 style="font-size: 12px; color: #888; margin-bottom: 15px;">INVESTIMENTOS ATIVOS</h3>
+        <div id="lista"></div>
+    </div>
 </div>
 
 <script>
     let currentUser = "";
+    let dados = [];
+    let saldoCofre = 0;
 
-    function handleAuth() {
-        const user = document.getElementById('auth-user').value.trim().toLowerCase();
-        if(!user) return Swal.fire('Erro', 'Digite um ID', 'error');
-        currentUser = user;
-        localStorage.setItem('finance_session', user);
+    function handleLogin() {
+        const u = document.getElementById('userField').value.trim().toLowerCase();
+        if(!u) return;
+        currentUser = u;
+        localStorage.setItem('finance_session', u);
         document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('app-content').style.display = 'flex';
-        loadUserStats();
+        document.getElementById('app').style.display = 'block';
+        carregarDados();
     }
 
-    function loadUserStats() {
-        const l = parseFloat(localStorage.getItem(currentUser + '_master_lucro')) || 0;
-        const i = parseFloat(localStorage.getItem(currentUser + '_master_inv')) || 0;
-        updateDisplays(l, i);
+    function adicionarRegistro() {
+        const p = parseFloat(document.getElementById('inp-p').value) || 0;
+        const i = parseFloat(document.getElementById('inp-i').value) || 0;
+        const n = parseInt(document.getElementById('inp-n').value) || 1;
+        if(p <= 0) return;
+
+        const novo = {
+            id: Date.now(),
+            valor: p,
+            lucro: p * (i/100) * n,
+            data: new Date().toLocaleDateString('pt-BR'),
+            recebido: false
+        };
+
+        dados.unshift(novo);
+        salvar();
+        document.getElementById('inp-p').value = "";
     }
 
-    function updateDisplays(lucro, inv) {
+    function marcarRecebido(id) {
+        const item = dados.find(d => d.id === id);
+        if(item && !item.recebido) {
+            item.recebido = true;
+            saldoCofre += item.lucro; // PEGA O SALDO E COLOCA NO COFRE
+            salvar();
+            Swal.fire({ icon: 'success', title: 'Lucro enviado ao Cofre!', background: '#111', color: '#fff', showConfirmButton: false, timer: 1500 });
+        }
+    }
+
+    function limparCofre() {
+        Swal.fire({
+            title: 'Zerar Cofre?',
+            text: "Isso limpará seu saldo disponível acumulado.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff3e3e',
+            confirmButtonText: 'Sim, zerar'
+        }).then(r => {
+            if(r.isConfirmed) {
+                saldoCofre = 0;
+                salvar();
+            }
+        });
+    }
+
+    function removerRegistro(id) {
+        if(confirm("Excluir registro?")) {
+            dados = dados.filter(d => d.id !== id);
+            salvar();
+        }
+    }
+
+    function salvar() {
+        localStorage.setItem(currentUser + '_finance_data', JSON.stringify(dados));
+        localStorage.setItem(currentUser + '_cofre', saldoCofre);
+        desenharTela();
+    }
+
+    function carregarDados() {
+        dados = JSON.parse(localStorage.getItem(currentUser + '_finance_data')) || [];
+        saldoCofre = parseFloat(localStorage.getItem(currentUser + '_cofre')) || 0;
+        desenharTela();
+    }
+
+    function desenharTela() {
         const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        document.getElementById('txt-lucro').innerText = f(lucro);
-        document.getElementById('txt-inv').innerText = f(inv);
-    }
+        let tLucroPendente = 0;
+        let tInvAtivo = 0;
 
-    function switchPage(id, btn) {
-        document.querySelectorAll('.viewport').forEach(v => v.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-' + id).classList.add('active');
-        btn.classList.add('active');
-    }
-
-    function syncAll() {
-        const frameIA = document.getElementById('frame-ia').contentWindow;
-        frameIA.postMessage({ type: 'requestFullHistory' }, '*');
-    }
-
-    window.addEventListener('message', (e) => {
-        if (e.data.type === 'sync_history' || e.data.type === 'lancar') {
-            const lucro = e.data.lucroTotal || 0;
-            const inv = e.data.invTotal || 0;
-            const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            updateDisplays(lucro, inv);
-            if(currentUser) {
-                localStorage.setItem(currentUser + '_master_lucro', lucro);
-                localStorage.setItem(currentUser + '_master_inv', inv);
+        const html = dados.map(item => {
+            if (!item.recebido) {
+                tLucroPendente += item.lucro;
+                tInvAtivo += item.valor;
             }
 
-            Swal.fire({
-                title: 'Lançamento OK!',
-                html: `<div style="text-align: left; font-size: 14px;">
-                        <p style="color: #00ff88;">Seus investimentos: <span style="float: right; color: #fff;">${f(inv)}</span></p>
-                        <p style="color: #00d4ff;">Seu saldo: <span style="float: right; color: #fff;">${f(lucro)}</span></p>
-                      </div>`,
-                icon: 'success',
-                background: '#0a0a0a',
-                color: '#fff',
-                confirmButtonColor: '#00ff88',
-                confirmButtonText: 'OK',
-                backdrop: `rgba(0,0,0,0.8) blur(5px)`
-            });
-        }
-    });
+            return `
+                <div class="hist-item" style="border-left-color: ${item.recebido ? 'var(--neon)' : '#ffaa00'}">
+                    <button class="btn-del" onclick="removerRegistro(${item.id})">&times;</button>
+                    <span class="status-tag" style="color: ${item.recebido ? 'var(--neon)' : '#ffaa00'}">
+                        ${item.recebido ? '● RECEBIDO (NO COFRE)' : '● EM OPERAÇÃO'}
+                    </span>
+                    <div style="margin-top:10px">
+                        <small style="color:#666">${item.data}</small><br>
+                        <b>Aporte: ${f(item.valor)}</b><br>
+                        <b style="color:var(--neon)">Lucro: + ${f(item.lucro)}</b>
+                    </div>
+                    ${!item.recebido ? `<button class="btn-check" onclick="marcarRecebido(${item.id})">COLETAR LUCRO</button>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('lista').innerHTML = html;
+        document.getElementById('label-lucro').innerText = f(tLucroPendente);
+        document.getElementById('label-inv').innerText = f(tInvAtivo);
+        document.getElementById('label-carteira').innerText = f(saldoCofre);
+    }
 
     window.onload = () => {
-        const s = localStorage.getItem('finance_session'); 
-        if(s) { 
-            document.getElementById('auth-user').value = s; 
-            handleAuth(); 
-        } 
-    }
+        const s = localStorage.getItem('finance_session');
+        if(s) { document.getElementById('userField').value = s; handleLogin(); }
+    };
 </script>
 </body>
 </html>
