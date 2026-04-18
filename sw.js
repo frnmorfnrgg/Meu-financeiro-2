@@ -1,4 +1,4 @@
-const cacheName = 'finance-pro-v1';
+const cacheName = 'finance-pro-v2';
 const assets = ['./', './index.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', e => {
@@ -13,18 +13,14 @@ self.addEventListener('fetch', e => {
   );
 });
 
-// Lógica para Notificações Push
+// ESCUTA MENSAGENS PARA DISPARAR NOTIFICAÇÃO
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'NOTIFICAR_VENCIMENTO') {
-        const options = {
-            body: `O lucro de ${event.data.valor} já está disponível para coleta!`,
+        self.registration.showNotification('Finance PRO: Lucro Disponível! 🚀', {
+            body: `O seu lucro de ${event.data.valor} já pode ser coletado!`,
             icon: './icon.png',
-            badge: './icon.png',
             vibrate: [200, 100, 200],
-            tag: 'vencimento-lucro',
-            renotify: true
-        };
-
-        self.registration.showNotification('Finance PRO: Lucro Disponível! 🚀', options);
+            tag: 'vencimento-lucro'
+        });
     }
 });
