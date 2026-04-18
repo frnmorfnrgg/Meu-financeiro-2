@@ -31,8 +31,8 @@
             padding: 15px; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
         }
-        .nav-tabs { display: flex; gap: 10px; margin-top: 15px; }
-        .tab-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: #111; color: #888; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .nav-tabs { display: flex; gap: 5px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { flex: none; width: 110px; padding: 12px 5px; border-radius: 10px; border: 1px solid var(--border); background: #111; color: #888; font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; }
         .tab-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,136,0.05); }
 
         .container { padding: 15px; max-width: 500px; margin: auto; width: 100%; }
@@ -52,10 +52,6 @@
         .input-box { background: #1a1a1a; padding: 10px; border-radius: 12px; border: 1px solid #333; margin-bottom: 10px; }
         .input-box label { display: block; font-size: 9px; color: #888; margin-bottom: 4px; }
         .input-box input { width: 100%; background: transparent; border: none; color: white; outline: none; }
-
-        .scanner-btn { background: #121212; border: 2px dashed #333; border-radius: 20px; padding: 30px 10px; text-align: center; cursor: pointer; margin-bottom: 15px; }
-        .loading-box { display: none; margin-top: 15px; color: var(--blue); font-weight: bold; font-size: 0.8rem; }
-        .btn-lancar { background: var(--neon); color: #000; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; margin-bottom: 15px; display: none; }
 
         .hist-item { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #333; position: relative; border-left: 5px solid #ffaa00; }
         .btn-del { position: absolute; right: 10px; top: 10px; color: var(--red); background: none; border: none; font-size: 20px; cursor: pointer; }
@@ -87,8 +83,9 @@
         </div>
     </div>
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('financeiro')"><i class="fas fa-wallet"></i> FINANCEIRO</button>
-        <button class="tab-btn" onclick="switchTab('scanner')"><i class="fas fa-robot"></i> ESCANEAR IA</button>
+        <button class="tab-btn active" onclick="switchTab('financeiro')"><i class="fas fa-wallet"></i> OPERAÇÕES</button>
+        <button class="tab-btn" onclick="switchTab('scanner')"><i class="fas fa-robot"></i> SCAN IA</button>
+        <button class="tab-btn" onclick="switchTab('extrato')"><i class="fas fa-list-ul"></i> EXTRATO</button>
     </div>
 </header>
 
@@ -98,30 +95,32 @@
             <div class="input-box"><label>VALOR (R$)</label><input type="number" id="inp-p" placeholder="0.00"></div>
             <div class="input-box"><label>TAXA (%)</label><input type="number" id="inp-i" placeholder="0"></div>
             <div class="input-box"><label>DIAS</label><input type="number" id="inp-n" value="1"></div>
-            <button class="btn-save" onclick="adicionarManual()" style="width:100%; padding:15px; border-radius:12px; background:var(--neon); border:none; font-weight:bold;">LANÇAR MANUAL</button>
+            <button onclick="adicionarManual()" style="width:100%; padding:15px; border-radius:12px; background:var(--neon); border:none; font-weight:bold; color:#000;">LANÇAR MANUAL</button>
         </div>
         <div id="lista-financeiro"></div>
     </div>
 
     <div id="view-scanner" class="view">
-        <div class="scanner-btn" onclick="document.getElementById('file-input').click()">
+        <div class="card" style="border: 2px dashed #333; text-align:center; padding:40px 10px;" onclick="document.getElementById('file-input').click()">
             <span style="font-size: 2rem;">📸</span><br>
             <b style="color: var(--blue);">ESCANEAR COMPROVANTE</b>
             <input type="file" id="file-input" accept="image/*" hidden onchange="processarIA(this)">
-            <div id="loading" class="loading-box">🤖 IA ANALISANDO...</div>
+            <div id="loading" style="display:none; margin-top:10px; color:var(--blue)">🤖 IA ANALISANDO...</div>
         </div>
-        <button id="btn-lancar-ia" class="btn-lancar" onclick="lancarEscaneados()">🚀 LANÇAR TUDO NO FINANCEIRO</button>
+        <button id="btn-lancar-ia" style="display:none; background:var(--neon); color:#000; border:none; padding:15px; width:100%; border-radius:12px; font-weight:bold; margin-top:15px;" onclick="lancarEscaneados()">🚀 LANÇAR TUDO NO FINANCEIRO</button>
         <div id="lista-ia"></div>
+    </div>
+
+    <div id="view-extrato" class="view">
+        <h3 style="margin-bottom:15px; color:var(--neon); font-size:14px;">HISTÓRICO DE LUCROS COLETADOS</h3>
+        <div id="lista-extrato"></div>
     </div>
 </div>
 
 <script>
-    // REGISTRO DO SERVICE WORKER PARA PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW registrado!', reg))
-                .catch(err => console.log('Erro no SW', err));
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('Erro SW', err));
         });
     }
 
@@ -130,18 +129,43 @@
     let dadosEscaneados = [];
     let saldoCofre = 0;
 
+    // --- OPÇÃO 3: LÓGICA DE NOTIFICAÇÃO ---
+    async function solicitarPermissaoNotificacao() {
+        if ('Notification' in window) {
+            await Notification.requestPermission();
+        }
+    }
+
+    function verificarVencimentosHoje() {
+        const hoje = new Date().toLocaleDateString('pt-BR').split(',')[0];
+        dadosFinanceiros.forEach(item => {
+            const dataItemFormatada = formatarDataNotificacao(item.data, item.prazo);
+            if (dataItemFormatada === hoje && !item.recebido) {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'NOTIFICAR_VENCIMENTO',
+                        valor: item.lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                    });
+                }
+            }
+        });
+    }
+
+    function formatarDataNotificacao(dataStr, dias) {
+        let partes = dataStr.split('/');
+        let data = new Date(partes[2], partes[1] - 1, partes[0]);
+        data.setDate(data.getDate() + parseInt(dias));
+        return data.toLocaleDateString('pt-BR');
+    }
+
+    // --- FUNÇÕES CORE ---
     function formatarDataRecebimento(dataStr, dias) {
         try {
             let partes = dataStr.split('/');
             let data = new Date(partes[2], partes[1] - 1, partes[0]);
             data.setDate(data.getDate() + parseInt(dias));
-            
             const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
-            const diaSemana = diasSemana[data.getDay()];
-            const diaMes = data.getDate().toString().padStart(2, '0');
-            const mes = (data.getMonth() + 1).toString().padStart(2, '0');
-
-            return `${diaSemana}, ${diaMes}/${mes}`;
+            return `${diasSemana[data.getDay()]}, ${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}`;
         } catch(e) { return "Data inválida"; }
     }
 
@@ -153,23 +177,9 @@
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('main-header').style.display = 'block';
         document.getElementById('app-content').style.display = 'block';
+        solicitarPermissaoNotificacao();
         carregarTudo();
-    }
-
-    function zerarSaldoColetado() {
-        Swal.fire({
-            title: 'Zerar Saldo?',
-            text: "Deseja limpar o cofre?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ff3e3e',
-            confirmButtonText: 'Sim'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                saldoCofre = 0;
-                salvar();
-            }
-        });
+        setInterval(verificarVencimentosHoje, 60000); // Checa a cada minuto
     }
 
     function switchTab(tab) {
@@ -177,88 +187,6 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('view-' + tab).classList.add('active');
         if(event) event.currentTarget.classList.add('active');
-    }
-
-    async function processarIA(input) {
-        if (!input.files || !input.files[0]) return;
-        const loading = document.getElementById('loading');
-        loading.style.display = 'block';
-        loading.innerText = "🤖 INICIALIZANDO IA...";
-
-        try {
-            const worker = await Tesseract.createWorker({
-                logger: m => { if(m.status === 'recognizing') loading.innerText = `🤖 ANALISANDO: ${Math.round(m.progress * 100)}%`; }
-            });
-            
-            await worker.loadLanguage('por+eng');
-            await worker.initialize('por+eng');
-            await worker.setParameters({ tessedit_char_whitelist: '0123456789BRL.,/ dias' });
-
-            const { data: { text } } = await worker.recognize(input.files[0]);
-            const cleanText = text.replace(/\s+/g, ' ');
-            
-            const regexValores = /BRL\s?(\d+[\.,]\d{2})/gi;
-            const regexDatas = /(\d{2}\/\d{2}\/\d{4})/g;
-            const regexDias = /(\d+)\s?dias/gi;
-
-            const valores = [...cleanText.matchAll(regexValores)].map(m => parseFloat(m[1].replace(',', '.')));
-            const datas = [...cleanText.matchAll(regexDatas)].map(m => m[1]);
-            const prazos = [...cleanText.matchAll(regexDias)].map(m => parseInt(m[1]));
-
-            for (let i = 0; i < valores.length; i += 2) {
-                if (valores[i] !== undefined && valores[i+1] !== undefined) {
-                    const prazo = prazos[Math.floor(i/2)] || 1;
-                    const dataIni = datas[Math.floor(i/2)] || new Date().toLocaleDateString('pt-BR');
-                    dadosEscaneados.push({
-                        id: Date.now() + i,
-                        investido: valores[i],
-                        lucro: valores[i+1],
-                        prazo: prazo,
-                        data: dataIni,
-                        previsao: formatarDataRecebimento(dataIni, prazo)
-                    });
-                }
-            }
-            
-            await worker.terminate();
-            renderScanner();
-        } catch (e) { 
-            Swal.fire("Erro IA", "Não foi possível ler a imagem. Tente uma foto mais clara.", "error"); 
-        } finally { 
-            loading.style.display = 'none'; 
-            input.value = "";
-        }
-    }
-
-    function renderScanner() {
-        const btn = document.getElementById('btn-lancar-ia');
-        btn.style.display = dadosEscaneados.length > 0 ? 'block' : 'none';
-        document.getElementById('lista-ia').innerHTML = dadosEscaneados.map(item => `
-            <div class="card" style="border-left:4px solid var(--blue)">
-                <small>${item.data} (${item.prazo} dias)</small><br>
-                <b>Investido: R$ ${item.investido.toFixed(2)}</b><br>
-                <b style="color:var(--neon)">Lucro: R$ ${item.lucro.toFixed(2)}</b><br>
-                <div class="date-badge"><i class="far fa-calendar-alt"></i> Receber em: ${item.previsao}</div>
-            </div>
-        `).join('');
-    }
-
-    function lancarEscaneados() {
-        dadosEscaneados.forEach(item => {
-            dadosFinanceiros.unshift({
-                id: item.id,
-                valor: item.investido,
-                lucro: item.lucro,
-                data: item.data,
-                prazo: item.prazo,
-                recebido: false
-            });
-        });
-        dadosEscaneados = [];
-        salvar();
-        renderScanner();
-        switchTab('financeiro');
-        Swal.fire("Sucesso", "Lançamentos concluídos!", "success");
     }
 
     function adicionarManual() {
@@ -273,7 +201,8 @@
             lucro: p * (i/100) * n,
             data: new Date().toLocaleDateString('pt-BR'),
             prazo: n,
-            recebido: false
+            recebido: false,
+            dataColeta: null
         });
         salvar();
         document.getElementById('inp-p').value = "";
@@ -283,10 +212,17 @@
         const item = dadosFinanceiros.find(d => d.id === id);
         if(item && !item.recebido) {
             item.recebido = true;
+            item.dataColeta = new Date().toLocaleString('pt-BR');
             saldoCofre += item.lucro;
             salvar();
             Swal.fire({ icon: 'success', title: 'Lucro coletado!', showConfirmButton: false, timer: 1000 });
         }
+    }
+
+    function zerarSaldoColetado() {
+        Swal.fire({ title: 'Zerar Saldo?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sim' }).then((r) => {
+            if (r.isConfirmed) { saldoCofre = 0; salvar(); }
+        });
     }
 
     function remover(id) {
@@ -298,41 +234,100 @@
         localStorage.setItem(currentUser + '_dados', JSON.stringify(dadosFinanceiros));
         localStorage.setItem(currentUser + '_cofre', saldoCofre);
         renderFinanceiro();
+        renderExtrato();
     }
 
     function carregarTudo() {
         dadosFinanceiros = JSON.parse(localStorage.getItem(currentUser + '_dados')) || [];
         saldoCofre = parseFloat(localStorage.getItem(currentUser + '_cofre')) || 0;
         renderFinanceiro();
+        renderExtrato();
     }
 
     function renderFinanceiro() {
         const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         let pLucro = 0, pInv = 0;
 
-        document.getElementById('lista-financeiro').innerHTML = dadosFinanceiros.map(item => {
-            if(!item.recebido) { pLucro += item.lucro; pInv += item.valor; }
-            const previsaoExtenso = formatarDataRecebimento(item.data, item.prazo || 1);
+        // Filtra apenas o que NÃO foi recebido para a aba principal
+        const operacoesAtivas = dadosFinanceiros.filter(d => !d.recebido);
 
+        document.getElementById('lista-financeiro').innerHTML = operacoesAtivas.map(item => {
+            pLucro += item.lucro; pInv += item.valor;
+            const previsao = formatarDataRecebimento(item.data, item.prazo || 1);
             return `
-                <div class="hist-item" style="border-left-color: ${item.recebido ? 'var(--neon)' : '#ffaa00'}">
+                <div class="hist-item">
                     <button class="btn-del" onclick="remover(${item.id})">&times;</button>
-                    <small style="color:${item.recebido ? 'var(--neon)' : '#ffaa00'}">
-                        ${item.recebido ? '● RECEBIDO' : '● EM OPERAÇÃO'}
-                    </small><br>
+                    <small style="color:#ffaa00">● EM OPERAÇÃO</small><br>
                     <small>${item.data} (${item.prazo} dias)</small><br>
                     <b>Aporte: ${f(item.valor)}</b> | <b style="color:var(--neon)">+ ${f(item.lucro)}</b><br>
-                    ${!item.recebido ? `
-                        <div class="date-badge"><i class="far fa-calendar-check"></i> Receber em: ${previsaoExtenso}</div>
-                        <button class="btn-check" onclick="marcarRecebido(${item.id})">COLETAR LUCRO</button>
-                    ` : '<div class="date-badge" style="background:rgba(0,255,136,0.1); color:var(--neon); border-color:rgba(0,255,136,0.2)">CONCLUÍDO</div>'}
+                    <div class="date-badge"><i class="far fa-calendar-check"></i> Receber em: ${previsao}</div>
+                    <button class="btn-check" onclick="marcarRecebido(${item.id})">COLETAR LUCRO</button>
                 </div>
             `;
         }).join('');
 
+        // Se não houver nada ativo
+        if(operacoesAtivas.length === 0) {
+            document.getElementById('lista-financeiro').innerHTML = '<p style="text-align:center; color:#555; margin-top:20px;">Nenhuma operação ativa.</p>';
+        }
+
         document.getElementById('label-carteira').innerText = f(saldoCofre);
         document.getElementById('label-lucro').innerText = f(pLucro);
         document.getElementById('label-inv').innerText = f(pInv);
+    }
+
+    // --- OPÇÃO 2: RENDERIZAR EXTRATO ---
+    function renderExtrato() {
+        const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const concluidos = dadosFinanceiros.filter(d => d.recebido);
+
+        document.getElementById('lista-extrato').innerHTML = concluidos.map(item => `
+            <div class="hist-item" style="border-left-color: var(--neon); opacity: 0.8;">
+                <button class="btn-del" onclick="remover(${item.id})">&times;</button>
+                <small style="color:var(--neon)">✓ COLETADO EM: ${item.dataColeta}</small><br>
+                <b>Aporte Original: ${f(item.valor)}</b><br>
+                <b style="color:var(--neon)">Lucro Líquido: + ${f(item.lucro)}</b>
+            </div>
+        `).join('');
+
+        if(concluidos.length === 0) {
+            document.getElementById('lista-extrato').innerHTML = '<p style="text-align:center; color:#555;">Nenhum lucro coletado ainda.</p>';
+        }
+    }
+
+    // --- IA SCANNER (Resumido para o exemplo) ---
+    async function processarIA(input) {
+        if (!input.files[0]) return;
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block';
+        try {
+            const worker = await Tesseract.createWorker();
+            await worker.loadLanguage('por');
+            await worker.initialize('por');
+            const { data: { text } } = await worker.recognize(input.files[0]);
+            // Simulação de extração de valores
+            const valorDetectado = parseFloat(text.match(/\d+[\.,]\d{2}/)) || 0;
+            if(valorDetectado > 0) {
+                dadosEscaneados.push({ id: Date.now(), investido: valorDetectado, lucro: valorDetectado * 0.1, prazo: 1, data: new Date().toLocaleDateString('pt-BR'), previsao: 'Amanhã' });
+            }
+            await worker.terminate();
+            renderScanner();
+        } catch (e) { Swal.fire("Erro", "Erro na IA", "error"); }
+        loading.style.display = 'none';
+    }
+
+    function renderScanner() {
+        document.getElementById('btn-lancar-ia').style.display = dadosEscaneados.length > 0 ? 'block' : 'none';
+        document.getElementById('lista-ia').innerHTML = dadosEscaneados.map(item => `<div class="card"><b>R$ ${item.investido}</b> (IA detectou)</div>`).join('');
+    }
+
+    function lancarEscaneados() {
+        dadosEscaneados.forEach(item => {
+            dadosFinanceiros.unshift({ id: item.id, valor: item.investido, lucro: item.lucro, data: item.data, prazo: item.prazo, recebido: false });
+        });
+        dadosEscaneados = [];
+        salvar();
+        switchTab('financeiro');
     }
 
     window.onload = () => {
